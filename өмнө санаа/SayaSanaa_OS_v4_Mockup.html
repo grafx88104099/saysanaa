@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SayaSanaa OS — v4 Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#030712; --surf:#07131F; --bd:#13293F;
+  --tx:#F8FAFC; --sub:#7C8CA1;
+  --blue:#4F8CFF; --green:#32D583; --amber:#FFB020; --red:#FF5A5A; --gray:#667085;
+  --blue-bg:rgba(79,140,255,0.07); --green-bg:rgba(50,213,131,0.07);
+  --amber-bg:rgba(255,176,32,0.07); --red-bg:rgba(255,90,90,0.07);
+  --blue-bd:rgba(79,140,255,0.2); --green-bd:rgba(50,213,131,0.18);
+  --amber-bd:rgba(255,176,32,0.2); --red-bd:rgba(255,90,90,0.22);
+  --f:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:#020609;color:var(--tx);font-family:var(--f);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ── NAV ── */
+#prog{position:fixed;top:0;left:0;height:2px;background:var(--blue);z-index:9999;transition:width 0.1s}
+.nav{position:fixed;right:18px;top:50%;transform:translateY(-50%);z-index:900;display:flex;flex-direction:column;gap:7px}
+.nd{width:6px;height:6px;border-radius:50%;background:var(--bd);cursor:pointer;transition:all 0.2s}
+.nd.on{background:var(--blue);transform:scale(1.5)}
+
+/* ── SECTION HEADER ── */
+.sh{display:flex;flex-direction:column;align-items:center;text-align:center;padding:56px 0 32px;gap:8px}
+.sh-n{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--blue);letter-spacing:0.12em}
+.sh-t{font-size:26px;font-weight:800;letter-spacing:-0.02em;line-height:1.2}
+.sh-d{font-size:13px;color:var(--sub);max-width:540px;line-height:1.65}
+
+/* ── SCREEN ── */
+.sw{padding:0 28px 72px;max-width:1380px;margin:0 auto}
+.sf{border-radius:10px;overflow:hidden;border:1px solid var(--bd);box-shadow:0 24px 64px rgba(0,0,0,0.8)}
+.chrome{height:30px;background:#020609;border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 12px;gap:6px}
+.cd{width:10px;height:10px;border-radius:50%}
+.curl{flex:1;height:18px;background:var(--surf);border:1px solid var(--bd);border-radius:4px;margin:0 10px;display:flex;align-items:center;padding:0 8px;gap:5px}
+.curl span{font-family:var(--mono);font-size:9px;color:var(--sub)}
+
+/* ── COMMON OS ── */
+.os{display:flex;background:var(--bg)}
+.sb{width:52px;background:var(--surf);border-right:1px solid var(--bd);display:flex;flex-direction:column;align-items:center;padding:12px 0;flex-shrink:0}
+.sb-mk{width:30px;height:30px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;margin-bottom:18px}
+.sb-nav{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;width:100%}
+.sbi{width:38px;height:38px;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:1px solid transparent;position:relative}
+.sbi.on{background:var(--blue-bg);border-color:var(--blue-bd)}
+.sbi-i{font-size:13px;line-height:1}
+.sbi.on .sbi-i{opacity:1;color:var(--blue)}.sbi:not(.on) .sbi-i{opacity:0.2}
+.sbi-t{font-size:5px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase}
+.sbi.on .sbi-t{color:var(--blue)}.sbi:not(.on) .sbi-t{color:var(--gray)}
+.sb-dot{position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--red);border:1px solid var(--surf)}
+.sb-av{width:30px;height:30px;border-radius:50%;background:var(--bd);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--sub);margin-bottom:8px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.ov-bar{height:28px;background:var(--red-bg);border-bottom:1px solid var(--red-bd);display:flex;align-items:center;gap:8px;padding:0 18px;flex-shrink:0}
+.ov-t{font-size:11px;font-weight:600;color:var(--red)}
+.ov-chip{background:rgba(255,90,90,0.12);border:1px solid var(--red-bd);border-radius:4px;padding:1px 8px;font-size:10px;font-weight:600;color:var(--red);cursor:pointer}
+.topbar{height:50px;background:var(--surf);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 18px;flex-shrink:0}
+.tb-tt{font-size:14px;font-weight:700;letter-spacing:-0.01em}
+.tb-sub{font-size:10px;color:var(--sub);margin-top:1px}
+.tb-r{display:flex;align-items:center;gap:7px}
+.btn-tv{border:1px solid var(--bd);border-radius:6px;padding:6px 11px;font-size:11px;font-weight:500;color:var(--sub);cursor:pointer;background:transparent;font-family:var(--f)}
+.btn-add{background:var(--blue);border:none;border-radius:6px;padding:6px 13px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--f)}
+.btn-add-g{background:var(--green);border:none;border-radius:6px;padding:6px 13px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--f)}
+.page{flex:1;overflow-y:auto;padding:18px}
+
+/* ── SECTION LABEL ── */
+.slbl{font-size:10px;font-weight:600;color:var(--sub);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.slbl::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+/* ═══════════════════════════════════════
+   SCREEN 1 — DASHBOARD (redesigned)
+═══════════════════════════════════════ */
+
+/* --- Company Health Grid --- */
+.health-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:18px}
+.hc{background:var(--surf);padding:14px 16px;position:relative;overflow:hidden}
+.hc-l{font-size:9px;font-weight:600;color:var(--sub);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:6px}
+.hc-v{font-size:22px;font-weight:800;letter-spacing:-0.03em;line-height:1;margin-bottom:4px;padding-bottom:10px}
+.hc-s{font-size:10px;color:var(--sub)}
+.hc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.hc.blue .hc-v{color:var(--blue)}.hc.blue::after{background:var(--blue)}
+.hc.green .hc-v{color:var(--green)}.hc.green::after{background:var(--green)}
+.hc.red .hc-v{color:var(--red)}.hc.red::after{background:var(--red)}
+.hc.amber .hc-v{color:var(--amber)}.hc.amber::after{background:var(--amber)}
+
+/* --- Stats row --- */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.sc{background:var(--surf);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;position:relative;overflow:hidden}
+.sc-t{position:absolute;top:0;left:0;right:0;height:2px}
+.sc-l{font-size:9px;font-weight:600;color:var(--sub);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:6px}
+.sc-v{font-size:24px;font-weight:800;letter-spacing:-0.03em;line-height:1;margin-bottom:2px}
+.sc.red .sc-v{color:var(--red)}.sc.green .sc-v{color:var(--green)}.sc.blue .sc-v{color:var(--blue)}
+.sc-s{font-size:10px;color:var(--sub)}
+
+/* --- Staff tardiness table --- */
+.staff-table{border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.st-hd{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;background:rgba(7,19,31,0.8);border-bottom:1px solid var(--bd);padding:8px 14px;gap:8px}
+.st-hd span{font-size:9px;font-weight:700;color:var(--sub);letter-spacing:0.08em;text-transform:uppercase}
+.st-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;padding:9px 14px;gap:8px;border-bottom:1px solid rgba(19,41,63,0.5);align-items:center}
+.st-row:last-child{border-bottom:none}
+.st-row:hover{background:rgba(79,140,255,0.03)}
+.st-name{display:flex;align-items:center;gap:8px}
+.st-av{width:24px;height:24px;border-radius:50%;background:var(--bd);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--sub);flex-shrink:0}
+.st-nm{font-size:12px;font-weight:500;color:var(--tx)}
+.st-id{font-family:var(--mono);font-size:9px;color:var(--blue)}
+.tard-ok{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--green)}
+.tard-warn{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--amber)}
+.tard-bad{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red)}
+.tard-zero{font-family:var(--mono);font-size:11px;color:var(--gray)}
+.tard-bar{height:4px;border-radius:99px;overflow:hidden;background:var(--bd);width:100%;margin-top:4px}
+.tb-fill{height:100%;border-radius:99px}
+
+/* --- Events sidebar --- */
+.events-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.event-card{background:var(--surf);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px}
+.ev-ico{font-size:18px;flex-shrink:0;margin-top:1px}
+.ev-date{font-family:var(--mono);font-size:9px;color:var(--sub);margin-bottom:2px;font-weight:500}
+.ev-title{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:2px}
+.ev-sub{font-size:10.5px;color:var(--sub)}
+.ev-badge{display:inline-flex;margin-top:5px;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;border:1px solid}
+.ev-badge.bday{color:var(--amber);border-color:var(--amber-bd);background:var(--amber-bg)}
+.ev-badge.team{color:var(--blue);border-color:var(--blue-bd);background:var(--blue-bg)}
+.ev-badge.holiday{color:var(--green);border-color:var(--green-bd);background:var(--green-bg)}
+
+/* --- Holidays notice --- */
+.holiday-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--green-bg);border:1px solid var(--green-bd);border-radius:8px;margin-bottom:16px}
+.hb-ico{font-size:16px;flex-shrink:0}
+.hb-t{font-size:12px;font-weight:600;color:var(--green);margin-bottom:1px}
+.hb-s{font-size:10px;color:var(--sub)}
+.hb-days{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.hb-day{font-size:10px;font-weight:600;color:var(--green);background:var(--green-bg);border:1px solid var(--green-bd);padding:2px 8px;border-radius:4px;white-space:nowrap}
+
+/* --- Project tabs (Design / Construction) --- */
+.proj-tabs{display:flex;gap:0;border:1px solid var(--bd);border-radius:7px;overflow:hidden;margin-bottom:14px;width:fit-content}
+.ptab{padding:7px 16px;font-size:12px;font-weight:500;color:var(--sub);cursor:pointer;background:transparent;border:none;font-family:var(--f);transition:all 0.15s}
+.ptab.on{background:var(--blue);color:#fff;font-weight:700}
+
+/* --- Filter row --- */
+.frow{display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fb{display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid var(--bd);border-radius:6px;font-size:11px;color:var(--sub);cursor:pointer;font-weight:500;background:transparent}
+.fb.on{border-color:var(--blue-bd);background:var(--blue-bg);color:var(--blue);font-weight:600}
+.fc{font-family:var(--mono);font-size:9.5px;font-weight:700}
+.srch-w{flex:1;min-width:120px;position:relative}
+.srch-w input{width:100%;padding:6px 10px 6px 26px;background:var(--surf);border:1px solid var(--bd);border-radius:6px;font-size:11.5px;color:var(--sub);font-family:var(--f);outline:none}
+.srch-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--sub)}
+
+/* --- Project grid --- */
+.pg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+
+/* ── PROJECT CARD (DESIGN) ── */
+.pc{background:var(--surf);border:1px solid var(--bd);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color 0.15s;display:flex;flex-direction:column}
+.pc:hover{border-color:rgba(79,140,255,0.3)}
+.pc.ov{border-color:var(--red-bd);background:var(--red-bg)}
+.pc.cr{border-color:var(--amber-bd)}
+.pc-stripe{height:2px;flex-shrink:0}
+.pc-hd{padding:12px 13px 9px;display:flex;justify-content:space-between;align-items:flex-start;gap:9px}
+.pc-inf{flex:1;min-width:0}
+.pc-meta{display:flex;align-items:center;gap:5px;margin-bottom:4px;flex-wrap:wrap}
+.pc-code{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--blue);letter-spacing:0.05em}
+.pc-type{font-size:9px;color:var(--sub)}
+.pri{font-size:8.5px;font-weight:700;padding:1px 5px;border-radius:3px;border:1px solid;font-family:var(--mono)}
+.pri.r{color:var(--red);border-color:var(--red-bd);background:var(--red-bg)}
+.pri.a{color:var(--amber);border-color:var(--amber-bd);background:var(--amber-bg)}
+.pri.b{color:var(--blue);border-color:var(--blue-bd);background:var(--blue-bg)}
+.pri.gray{color:var(--gray);border-color:var(--bd)}
+.pc-nm{font-size:13px;font-weight:600;letter-spacing:-0.01em;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}
+.pc.ov .pc-nm{color:var(--red)}
+.pc-cli{font-size:10.5px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-asgns{display:flex;align-items:center;gap:5px;margin-top:6px}
+.av-stk{display:flex}
+.av{width:19px;height:19px;border-radius:50%;background:var(--bd);border:1.5px solid var(--surf);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:var(--sub);margin-right:-4px;flex-shrink:0}
+.av:last-child{margin-right:0}
+.av.p{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue)}
+.pc-an{font-size:10px;color:var(--sub);margin-left:5px}
+.ring-sm{position:relative;flex-shrink:0;width:46px;height:46px}
+.ring-sm svg{display:block;transform:rotate(-90deg)}
+.ring-sm-l{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.ring-sm-l span{font-size:11px;font-weight:700;color:var(--tx)}
+.alert-row{margin:0 13px 8px;padding:4px 9px;border-radius:5px;display:flex;align-items:center;gap:5px;font-size:10px;font-weight:500;border:1px solid}
+.alert-row.red{background:var(--red-bg);border-color:var(--red-bd);color:var(--red)}
+.alert-row.amber{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)}
+.alert-row .at{flex:1}.alert-row .ad{font-family:var(--mono);font-size:9.5px;font-weight:600}
+.rings8{padding:0 13px 11px;border-top:1px solid var(--bd)}
+.r8g{padding-top:9px;display:grid;grid-template-columns:repeat(4,1fr);gap:7px 4px}
+.r8c{display:flex;flex-direction:column;align-items:center;gap:2px}
+.mr{position:relative;width:34px;height:34px}
+.mr svg{display:block;transform:rotate(-90deg)}
+.mr-l{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.mr-l span{font-size:7.5px;font-weight:700;color:var(--tx);font-family:var(--mono)}
+.rn{font-size:6.5px;text-align:center;font-weight:500}
+.rn.dn{color:var(--green)}.rn.on{color:var(--tx)}.rn.td{color:var(--gray)}
+.pc-ft{display:flex;align-items:center;justify-content:space-between;padding:7px 13px 10px;border-top:1px solid var(--bd);margin-top:auto}
+.pc-am{font-family:var(--mono);font-size:9px;color:var(--sub)}
+.pc-dl{font-family:var(--mono);font-size:9px;color:var(--sub);margin-top:1px}
+.pc.ov .pc-dl{color:var(--red)}
+
+/* ── PROJECT CARD (CONSTRUCTION) ── */
+.cc{background:var(--surf);border:1px solid var(--bd);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color 0.15s;display:flex;flex-direction:column}
+.cc:hover{border-color:rgba(50,213,131,0.3)}
+.cc.active{border-color:var(--green-bd)}
+.cc-stripe{height:2px;flex-shrink:0}
+.cc-hd{padding:12px 13px 10px;display:flex;justify-content:space-between;align-items:flex-start;gap:9px}
+.cc-inf{flex:1;min-width:0}
+.cc-meta{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.cc-code{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--green);letter-spacing:0.05em}
+.cc-type{font-size:9px;color:var(--sub)}
+.cc-nm{font-size:13px;font-weight:600;letter-spacing:-0.01em;line-height:1.3;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-cli{font-size:10.5px;color:var(--sub)}
+.cc-prog{display:flex;align-items:center;gap:5px;margin-top:7px}
+.cc-pct{font-size:22px;font-weight:800;letter-spacing:-0.03em;color:var(--green)}
+.cc-pct-lbl{font-size:9px;color:var(--sub)}
+.cc-pbar{flex:1;height:4px;background:var(--bd);border-radius:99px;overflow:hidden}
+.cc-pfill{height:100%;background:var(--green);border-radius:99px}
+
+/* Construction stages (14 steps) */
+.con-stages{padding:0 13px 11px;border-top:1px solid var(--bd)}
+.con-s-title{font-size:9px;font-weight:600;color:var(--sub);letter-spacing:0.09em;text-transform:uppercase;padding-top:9px;margin-bottom:8px}
+.con-g{display:flex;flex-direction:column;gap:3px}
+.cst{display:flex;align-items:center;gap:7px;padding:4px 0}
+.cst-num{font-family:var(--mono);font-size:8px;color:var(--gray);font-weight:600;width:20px;text-align:right;flex-shrink:0}
+.cst-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1.5px solid}
+.cst-dot.done{background:var(--green);border-color:var(--green)}
+.cst-dot.active{background:var(--blue);border-color:var(--blue);box-shadow:0 0 0 2px rgba(79,140,255,0.2)}
+.cst-dot.todo{background:transparent;border-color:var(--bd)}
+.cst-name{font-size:10.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cst-name.done{color:var(--sub)}
+.cst-name.active{color:var(--tx);font-weight:600}
+.cst-name.todo{color:var(--gray)}
+.cst-pct{font-family:var(--mono);font-size:9px;font-weight:600;flex-shrink:0;min-width:28px;text-align:right}
+.cst-pct.done{color:var(--green)}
+.cst-pct.active{color:var(--blue)}
+.cst-pct.todo{color:var(--gray)}
+.cc-ft{display:flex;align-items:center;justify-content:space-between;padding:7px 13px 10px;border-top:1px solid var(--bd);margin-top:auto}
+
+/* ═══════════════════════════════════════
+   SCREEN 2 — ADD MODAL (both types)
+═══════════════════════════════════════ */
+.modal-bg{background:rgba(3,7,18,0.8);display:flex;justify-content:center;padding:20px;min-height:580px}
+.modal{width:680px;background:var(--surf);border:1px solid var(--bd);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,0.85);max-height:100%}
+.mhd{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bd)}
+.mhd-t{font-size:15px;font-weight:700;letter-spacing:-0.01em}
+.mhd-s{font-size:11px;color:var(--sub);margin-top:2px}
+.mx-btn{width:26px;height:26px;border:1px solid var(--bd);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;cursor:pointer;flex-shrink:0}
+
+/* Type selector */
+.type-sel{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:16px 20px;border-bottom:1px solid var(--bd)}
+.ts-opt{border:1px solid var(--bd);border-radius:8px;padding:12px 14px;cursor:pointer;transition:all 0.15s}
+.ts-opt.on{border-color:var(--blue-bd);background:var(--blue-bg)}
+.ts-icon{font-size:20px;margin-bottom:6px}
+.ts-title{font-size:13px;font-weight:700;margin-bottom:2px}
+.ts-sub{font-size:10.5px;color:var(--sub)}
+.ts-opt.on .ts-title{color:var(--blue)}
+
+.mbody{overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:18px}
+.fsec-hd{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.fsec-n{font-family:var(--mono);font-size:9px;color:var(--blue);font-weight:600;letter-spacing:0.08em}
+.fsec-rule{height:1px;flex:1;background:var(--bd)}
+.fsec-t{font-size:10px;font-weight:700;color:var(--sub);letter-spacing:0.09em;text-transform:uppercase}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.flbl{display:block;font-size:9.5px;font-weight:600;color:var(--sub);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px}
+.fi{width:100%;background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:9px 11px;font-size:12.5px;color:var(--tx);font-family:var(--f);outline:none;transition:border-color 0.15s}
+.fi:focus,.fi.on{border-color:var(--blue);box-shadow:0 0 0 3px rgba(79,140,255,0.09)}
+.fi.big{font-size:17px;font-weight:700;border-color:var(--blue)}
+.fi.mono{font-family:var(--mono);font-size:12px}
+.fi-valid{display:flex;align-items:center;justify-content:space-between}
+.fi-ok{font-size:9px;color:var(--green);font-family:var(--mono);font-weight:600}
+
+/* Date pair */
+.date-pair{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
+.dbox{border:1px solid var(--bd);border-radius:7px;padding:11px 12px;background:var(--bg)}
+.dbox.auto{border-color:var(--blue-bd);background:var(--blue-bg)}
+.db-l{font-size:9px;font-weight:600;color:var(--sub);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.db-auto{font-family:var(--mono);font-size:8px;color:var(--blue);font-weight:700}
+.db-v{font-family:var(--mono);font-size:14px;font-weight:700}
+.dbox.auto .db-v{color:var(--blue)}
+.db-s{font-size:10px;color:var(--sub);margin-top:2px}
+
+/* Auto-calc */
+.ares{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:8px}
+.arc{padding:9px 11px;border:1px solid var(--bd);border-radius:7px;background:var(--bg)}
+.arc-l{font-size:8.5px;font-weight:600;color:var(--sub);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:4px}
+.arc-v{font-size:15px;font-weight:700;letter-spacing:-0.02em}
+.arc.b .arc-v{color:var(--blue)}.arc.g .arc-v{color:var(--green)}
+
+/* Hours input grid for construction */
+.hours-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.hg-item{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hg-num{font-family:var(--mono);font-size:9px;color:var(--blue);font-weight:600;width:22px}
+.hg-name{font-size:11px;flex:1;color:var(--sub)}
+.hg-inp{width:56px;background:var(--surf);border:1px solid var(--bd);border-radius:4px;padding:3px 7px;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--tx);text-align:right;outline:none}
+.hg-u{font-size:9px;color:var(--gray)}
+
+/* Priority */
+.pri-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.pri-btn{width:28px;height:28px;border:1px solid var(--bd);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10.5px;color:var(--gray);cursor:pointer;font-weight:600;transition:all 0.12s}
+.pri-btn.sel{border-color:var(--blue-bd);color:var(--blue);background:var(--blue-bg)}
+.pri-btn.hi{border-color:var(--red-bd);color:var(--red);background:var(--red-bg)}
+
+/* Assignees */
+.ag{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.ac{padding:8px 9px;border:1px solid var(--bd);border-radius:7px;cursor:pointer;background:var(--bg);position:relative;transition:all 0.12s}
+.ac.sel{border-color:var(--blue-bd);background:var(--blue-bg)}
+.ac-top{display:flex;align-items:center;gap:5px;margin-bottom:2px}
+.ac-av{width:19px;height:19px;border-radius:50%;background:var(--bd);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:var(--sub);flex-shrink:0}
+.ac.sel .ac-av{background:var(--blue-bg);color:var(--blue)}
+.ac-id{font-family:var(--mono);font-size:8px;color:var(--blue);font-weight:500}
+.ac-nm{font-size:10.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac:not(.sel) .ac-nm{color:var(--sub)}
+.ac-tl{font-size:8.5px;color:var(--gray)}
+.ac-ck{position:absolute;top:5px;right:5px;width:12px;height:12px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;font-weight:800}
+
+/* Modal footer */
+.mft{padding:12px 20px;border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.mft-h{font-size:11px;color:var(--green);font-weight:500}
+.mft-b{display:flex;gap:8px}
+.btn-cx{padding:7px 15px;border:1px solid var(--bd);border-radius:6px;color:var(--sub);font-size:12px;font-weight:500;cursor:pointer;background:transparent;font-family:var(--f)}
+.btn-sv{padding:7px 18px;background:var(--blue);border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)}
+.btn-sv.green{background:var(--green)}
+
+/* ═══════════════════════════════════════
+   SCREEN 3 — DETAIL PANEL (Construction)
+═══════════════════════════════════════ */
+.dp-layout{display:flex;height:580px}
+.dp-bg{flex:1;overflow:hidden;opacity:0.22;padding:18px}
+.dp{width:560px;flex-shrink:0;background:var(--surf);border-left:1px solid var(--bd);display:flex;flex-direction:column}
+.dp-hd{padding:16px 20px 13px;border-bottom:1px solid var(--bd);position:relative}
+.dp-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;margin-bottom:8px;font-size:10px;font-weight:700;border:1px solid}
+.dp-tag.active{color:var(--green);border-color:var(--green-bd);background:var(--green-bg)}
+.dp-code{font-family:var(--mono);font-size:9.5px;color:var(--green);font-weight:600;margin-bottom:3px}
+.dp-t{font-size:17px;font-weight:700;letter-spacing:-0.02em;margin-bottom:2px}
+.dp-s{font-size:11.5px;color:var(--sub)}
+.dp-x{position:absolute;top:16px;right:20px;width:26px;height:26px;border:1px solid var(--bd);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;cursor:pointer}
+.dp-body{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:18px}
+.dp-sh{font-size:10px;font-weight:700;color:var(--sub);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.dp-sh::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+/* Assignee cards */
+.asgn-cards{display:flex;gap:7px;flex-wrap:wrap}
+.asgn-card{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);flex:1;min-width:180px}
+.asgn-av{width:36px;height:36px;border-radius:50%;background:var(--surf);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--blue);flex-shrink:0;position:relative}
+.asgn-av::after{content:'';position:absolute;bottom:0;right:0;width:9px;height:9px;background:var(--green);border-radius:50%;border:2px solid var(--bg)}
+.asgn-nm{font-size:12.5px;font-weight:600;margin-bottom:2px}
+.asgn-id{font-family:var(--mono);font-size:8.5px;color:var(--blue)}
+.asgn-rl{font-size:10px;color:var(--sub)}
+.asgn-bg{display:flex;gap:4px;margin-top:4px}
+.abg{font-size:8px;font-weight:700;padding:1px 6px;border-radius:3px;border:1px solid}
+.abg.main{color:var(--green);border-color:var(--green-bd);background:var(--green-bg)}
+.abg.sub{color:var(--gray);border-color:var(--bd)}
+
+/* Info table */
+.infot{border:1px solid var(--bd);border-radius:7px;overflow:hidden;margin-bottom:9px}
+.irow{display:flex;align-items:stretch;border-bottom:1px solid rgba(19,41,63,0.5)}
+.irow:last-child{border-bottom:none}
+.ik{width:112px;flex-shrink:0;padding:7px 11px;background:rgba(7,19,31,0.6);border-right:1px solid rgba(19,41,63,0.5)}
+.ik-c{font-family:var(--mono);font-size:8px;color:var(--blue);margin-bottom:1px;font-weight:500}
+.ik-l{font-size:10.5px;font-weight:600;color:var(--sub)}
+.iv{flex:1;padding:7px 11px;display:flex;align-items:center;font-size:12px}
+.iv.mono{font-family:var(--mono);font-size:10.5px}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.kc{padding:9px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);text-align:center}
+.kc-v{font-size:14px;font-weight:700;margin-bottom:2px;letter-spacing:-0.01em}
+.kc-v.g{color:var(--green)}.kc-v.b{color:var(--blue)}
+.kc-l{font-size:8.5px;font-weight:600;color:var(--sub);letter-spacing:0.08em;text-transform:uppercase}
+
+/* Overall row */
+.overall{display:flex;align-items:center;gap:12px;padding:12px 13px;border:1px solid var(--bd);border-radius:7px;background:var(--bg);margin-bottom:7px}
+.ov-ring{position:relative;flex-shrink:0}
+.ov-ring svg{display:block;transform:rotate(-90deg)}
+.ov-rl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.ov-rl span{font-size:14px;font-weight:800}
+.ov-info{flex:1}
+.ov-lbl{font-size:9px;font-weight:600;color:var(--sub);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:6px}
+.ov-bar-wrap{height:3px;background:var(--bd);border-radius:99px;overflow:hidden;margin-bottom:4px}
+.ov-bar-fill{height:100%;border-radius:99px}
+.ov-note{font-size:10px;color:var(--sub)}
+.ov-pct{font-size:24px;font-weight:800;letter-spacing:-0.03em}
+
+/* Construction stage detail list */
+.cst-detail{display:flex;flex-direction:column;gap:3px}
+.cstd{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid transparent;border-radius:6px}
+.cstd.on{background:var(--blue-bg);border-color:var(--blue-bd)}
+.cstd-num{font-family:var(--mono);font-size:8.5px;color:var(--gray);font-weight:600;width:18px;text-align:right;flex-shrink:0}
+.cstd-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1.5px solid}
+.cstd-dot.done{background:var(--green);border-color:var(--green)}
+.cstd-dot.active{background:var(--blue);border-color:var(--blue)}
+.cstd-dot.todo{background:transparent;border-color:var(--bd)}
+.cstd-name{font-size:11.5px;flex:1}
+.cstd-name.done{color:var(--sub)}
+.cstd-name.active{color:var(--tx);font-weight:600}
+.cstd-name.todo{color:var(--gray)}
+.cstd-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.cstd-hrs{font-family:var(--mono);font-size:9px;color:var(--gray)}
+.cstd-ring{position:relative;width:28px;height:28px}
+.cstd-ring svg{display:block;transform:rotate(-90deg)}
+.cstd-ring-l{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.cstd-ring-l span{font-family:var(--mono);font-size:7.5px;font-weight:700}
+.cstd-slider{width:48px;height:2.5px;background:var(--bd);border-radius:99px;position:relative;cursor:pointer}
+.cstd-sf{position:absolute;left:0;top:0;height:100%;border-radius:99px}
+.cstd-sth{position:absolute;top:50%;width:10px;height:10px;border-radius:50%;border:2px solid var(--surf);transform:translate(-50%,-50%)}
+
+/* ═══════════════════════════════════════
+   SCREEN 4 — TV DASHBOARD
+═══════════════════════════════════════ */
+.tv{background:var(--bg);display:flex;flex-direction:column;min-height:500px}
+.tv-hd{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.tv-brand{display:flex;align-items:center;gap:11px}
+.tv-mk{width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
+.tv-nm{font-size:13px;font-weight:800;letter-spacing:-0.01em}
+.tv-sub{font-size:9px;color:var(--sub)}
+.live{display:flex;align-items:center;gap:5px;border:1px solid var(--red-bd);padding:2px 8px;border-radius:4px;margin-left:8px;background:var(--red-bg)}
+.live-d{width:5px;height:5px;border-radius:50%;background:var(--red)}
+.live-t{font-family:var(--mono);font-size:7.5px;color:var(--red);letter-spacing:0.09em;font-weight:600}
+.tv-kpis{display:flex;gap:16px;margin-left:16px}
+.tvk{text-align:center}
+.tvkv{font-size:15px;font-weight:800;color:var(--tx);line-height:1;letter-spacing:-0.02em}
+.tvkv.r{color:var(--red)}.tvkv.b{color:var(--blue)}.tvkv.g{color:var(--green)}
+.tvkl{font-size:7px;font-weight:600;color:var(--sub);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px}
+.tv-clock{text-align:right}
+.tv-time{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--tx);letter-spacing:0.04em}
+.tv-date{font-size:9px;color:var(--sub);margin-top:1px}
+.tv-ov{height:26px;background:var(--red-bg);border-bottom:1px solid var(--red-bd);display:flex;align-items:center;gap:8px;padding:0 26px;font-size:11px;font-weight:600;color:var(--red);flex-shrink:0}
+.tv-ov-chip{border:1px solid var(--red-bd);padding:0 7px;font-size:9.5px;font-weight:600;border-radius:4px}
+.tv-grid-area{flex:1;padding:11px 22px;overflow:hidden}
+.tv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;height:100%}
+.tvc{background:var(--surf);border:1px solid var(--bd);border-radius:8px;padding:12px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.tvc.ov{border-color:var(--red-bd);background:var(--red-bg)}
+.tvc.cr{border-color:var(--amber-bd)}
+.tvc.con{border-color:var(--green-bd);background:var(--green-bg)}
+.tvc-top{position:absolute;top:0;left:0;right:0;height:2px}
+.tvc-type{font-size:8px;font-weight:700;padding:1px 6px;border-radius:3px;border:1px solid;width:fit-content;margin-bottom:5px;font-family:var(--mono)}
+.tvc-type.design{color:var(--blue);border-color:var(--blue-bd);background:var(--blue-bg)}
+.tvc-type.con{color:var(--green);border-color:var(--green-bd);background:var(--green-bg)}
+.tvc-code{font-family:var(--mono);font-size:8.5px;font-weight:500;letter-spacing:0.05em;margin-bottom:2px}
+.tvc.ov .tvc-code,.tvc.ov .tvc-nm{color:var(--red)}
+.tvc-nm{font-size:11.5px;font-weight:700;letter-spacing:-0.01em;line-height:1.3;margin-bottom:2px}
+.tvc-cli{font-size:9px;color:var(--sub);margin-bottom:6px}
+.tvc-ov{display:inline-flex;align-items:center;gap:3px;border:1px solid var(--red-bd);background:var(--red-bg);padding:2px 6px;border-radius:4px;margin-bottom:5px;font-size:8.5px;font-weight:700;color:var(--red)}
+.tvc-asgns{display:flex;align-items:center;gap:3px;margin-bottom:6px}
+.tvc-av{width:16px;height:16px;border-radius:50%;background:var(--bd);border:1px solid var(--surf);display:flex;align-items:center;justify-content:center;font-size:5.5px;font-weight:700;color:var(--sub);margin-right:-3px}
+.tvc-av.p{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue)}
+.tvc-av.pg{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
+.tvc-at{font-size:8.5px;color:var(--sub);margin-left:5px}
+.tvc-pct{font-size:26px;font-weight:900;line-height:1;letter-spacing:-0.04em;margin-bottom:4px}
+.tvc.ov .tvc-pct{color:var(--red)}.tvc.con .tvc-pct{color:var(--green)}
+.tvc-prog{height:2px;background:var(--bd);border-radius:99px;overflow:hidden;margin-bottom:8px}
+.tvc-fill{height:100%;border-radius:99px}
+.tvc-rings{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;flex:1}
+.tvc-rc{display:flex;flex-direction:column;align-items:center;gap:2px}
+.tvr{position:relative;width:19px;height:19px}
+.tvr svg{display:block;transform:rotate(-90deg)}
+.tvr-l{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.tvr-l span{font-family:var(--mono);font-size:4.5px;font-weight:700;color:var(--sub)}
+.tvr-n{font-size:5px;color:var(--gray);text-align:center;font-weight:500}
+.tvc-ft{padding-top:7px;border-top:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;margin-top:auto}
+.tvcf-a{font-size:8.5px;color:var(--sub)}
+.tvcf-d{font-family:var(--mono);font-size:8px;color:var(--sub)}
+.tvc.ov .tvcf-d{color:var(--red)}
+.ticker{height:22px;border-top:1px solid var(--bd);display:flex;align-items:center;gap:10px;padding:0 26px;overflow:hidden;background:var(--surf);flex-shrink:0}
+.tk-l{font-family:var(--mono);font-size:7.5px;font-weight:700;color:var(--red);letter-spacing:0.1em;flex-shrink:0}
+.tk-s{display:flex;gap:22px;white-space:nowrap;overflow:hidden}
+.ti{font-size:9.5px;color:var(--sub)}
+.ti .tc{font-family:var(--mono);font-weight:600;color:var(--tx)}
+.ti.ov .tc{color:var(--red)}
+.ti .tp{font-weight:700}
+.ti.ov .tp{color:var(--red)}
+
+/* ── HELPERS ── */
+.r(c){stroke-dasharray:c}
+</style>
+</head>
+<body>
+<div id="prog" style="width:0%"></div>
+<div class="nav">
+  <div class="nd on" onclick="sc(0)" title="Дашбоард"></div>
+  <div class="nd" onclick="sc(1)" title="Засал нэмэх"></div>
+  <div class="nd" onclick="sc(2)" title="Засал дэлгэрэнгүй"></div>
+  <div class="nd" onclick="sc(3)" title="TV Dashboard"></div>
+</div>
+
+<!-- ══════════════════════════════════
+     01 — MAIN DASHBOARD
+══════════════════════════════════ -->
+<div id="s1">
+  <div class="sh">
+    <div class="sh-n">ДЭЛГЭЦ 01 / 04</div>
+    <div class="sh-t">Үндсэн дашбоард</div>
+    <div class="sh-d">Компанийн эрүүл мэнд · Ажилтны цаг хоцролт · Баяр, тэмдэглэлт өдрүүд · Зураг + Засал төслүүд</div>
+  </div>
+  <div class="sw">
+    <div class="sf">
+      <div class="chrome">
+        <div class="cd" style="background:#FF5F57"></div>
+        <div class="cd" style="background:#FFBD2E"></div>
+        <div class="cd" style="background:#28CA41"></div>
+        <div class="curl"><span>🔒</span><span>os.sayasanaa.mn/design</span></div>
+      </div>
+      <div class="os" style="height:720px">
+        <div class="sb">
+          <div class="sb-mk">SS</div>
+          <div class="sb-nav">
+            <div class="sbi on" style="position:relative"><div class="sbi-i">◈</div><div class="sbi-t">Дизайн</div><div class="sb-dot"></div></div>
+            <div class="sbi"><div class="sbi-i">◎</div><div class="sbi-t">Санхүү</div></div>
+            <div class="sbi"><div class="sbi-i">◉</div><div class="sbi-t">Операшн</div></div>
+            <div class="sbi"><div class="sbi-i">⬡</div><div class="sbi-t">Барилга</div></div>
+            <div class="sbi"><div class="sbi-i">↗</div><div class="sbi-t">Аналитик</div></div>
+          </div>
+          <div class="sb-av" style="font-size:9px;font-weight:700">ХО</div>
+        </div>
+        <div class="main">
+          <div class="ov-bar">
+            <span class="ov-t">⚠ Хугацаа хэтэрсэн:</span>
+            <span class="ov-chip">SS26-12 — 31 өдөр</span>
+          </div>
+          <div class="topbar">
+            <div><div class="tb-tt">Design Management</div><div class="tb-sub">2026-05-11 · Даваа · 09:42:18</div></div>
+            <div class="tb-r">
+              <div class="btn-tv">📺 TV</div>
+              <div class="btn-add">+ Зураг төсөл</div>
+              <div class="btn-add-g">+ Засал төсөл</div>
+            </div>
+          </div>
+          <div class="page">
+
+            <!-- COMPANY HEALTH -->
+            <div class="slbl">Компанийн эрүүл мэнд</div>
+            <div class="health-grid" style="margin-bottom:14px">
+              <div class="hc blue"><div class="hc-l">Нийт явц</div><div class="hc-v">68%</div><div class="hc-s">12 идэвхтэй төсөл</div></div>
+              <div class="hc green"><div class="hc-l">Орлого энэ сар</div><div class="hc-v">₮284M</div><div class="hc-s">+18% өмнөхөөс</div></div>
+              <div class="hc red"><div class="hc-l">Нийт цаг хоцролт</div><div class="hc-v">−2ц 34мин</div><div class="hc-s">10 ажилтан хамтдаа</div></div>
+              <div class="hc red"><div class="hc-l">Хэтэрсэн төсөл</div><div class="hc-v">1 / 14</div><div class="hc-s">SS26-12 · 31 өдөр</div></div>
+              <div class="hc blue"><div class="hc-l">Чанарын оноо</div><div class="hc-v">7.8 / 10</div><div class="hc-s">Энэ сарын 2 төсөл</div></div>
+            </div>
+
+            <!-- HOLIDAYS + EVENTS ROW -->
+            <div class="slbl">Энэ сарын тэмдэглэлт өдрүүд</div>
+            <div class="holiday-bar">
+              <div class="hb-ico">🗓</div>
+              <div><div class="hb-t">2026 оны 5-р сарын амралтын өдрүүд</div><div class="hb-s">Ажилтан бүр сардаа 30 минутын хоцрох эрхтэй</div></div>
+              <div class="hb-days">
+                <span class="hb-day">5/11 · Даваа — хэвийн</span>
+                <span class="hb-day" style="color:var(--amber);border-color:var(--amber-bd);background:var(--amber-bg)">5/26 · Хот байгуулсан өдөр</span>
+              </div>
+            </div>
+            <div class="events-grid" style="margin-bottom:14px">
+              <div class="event-card">
+                <div class="ev-ico">🎂</div>
+                <div><div class="ev-date">2026-05-14</div><div class="ev-title">Б.Гантулга — Төрсөн өдөр</div><div class="ev-sub">SS10 · Интерьер дизайнер</div><div class="ev-badge bday">БDAY</div></div>
+              </div>
+              <div class="event-card">
+                <div class="ev-ico">🎂</div>
+                <div><div class="ev-date">2026-05-22</div><div class="ev-title">Д.Аймерей — Төрсөн өдөр</div><div class="ev-sub">SS13 · Интерьер дизайнер</div><div class="ev-badge bday">BDAY</div></div>
+              </div>
+              <div class="event-card">
+                <div class="ev-ico">🏃</div>
+                <div><div class="ev-date">2026-05-17 · Бямба</div><div class="ev-title">Team Building — Богд уул</div><div class="ev-sub">Бүх ажилтан · 09:00 эхэлнэ</div><div class="ev-badge team">TEAM</div></div>
+              </div>
+              <div class="event-card">
+                <div class="ev-ico">📋</div>
+                <div><div class="ev-date">2026-05-29 · Баасан</div><div class="ev-title">Сарын тайлан, дүгнэлт</div><div class="ev-sub">Удирдлагын хурал · 14:00</div><div class="ev-badge team">MEETING</div></div>
+              </div>
+            </div>
+
+            <!-- STAFF TARDINESS -->
+            <div class="slbl">Ажилтны цаг хоцролт — 2026 оны 5-р сар</div>
+            <div class="staff-table" style="margin-bottom:16px">
+              <div class="st-hd">
+                <span>Ажилтан</span>
+                <span>Нийт хоцролт</span>
+                <span>Үлдэгдэл</span>
+                <span>Статус</span>
+                <span>Явц</span>
+              </div>
+              <!-- row: ok -->
+              <div class="st-row">
+                <div class="st-name"><div class="st-av" style="background:var(--blue-bg);color:var(--blue)">ХО</div><div><div class="st-nm">Х.Одбаяр</div><div class="st-id">SS01</div></div></div>
+                <span class="tard-zero">0 мин</span>
+                <span class="tard-ok">30 мин</span>
+                <span style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--green)">● Хэвийн</span>
+                <div><div class="tard-bar"><div class="tb-fill" style="width:0%;background:var(--green)"></div></div></div>
+              </div>
+              <!-- row: warning -->
+              <div class="st-row">
+                <div class="st-name"><div class="st-av">ХС</div><div><div class="st-nm">Х.Саран</div><div class="st-id">SS08</div></div></div>
+                <span class="tard-warn">−45 мин</span>
+                <span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--red)">+15 давсан</span>
+                <span style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--amber)">⚠ Анхааруулга</span>
+                <div><div class="tard-bar"><div class="tb-fill" style="width:100%;background:var(--amber)"></div></div></div>
+              </div>
+              <!-- row: ok -->
+              <div class="st-row">
+                <div class="st-name"><div class="st-av">ГО</div><div><div class="st-nm">Г.Отгонбаяр</div><div class="st-id">SS07</div></div></div>
+                <span class="tard-ok">−12 мин</span>
+                <span class="tard-ok">18 мин</span>
+                <span style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--green)">● Хэвийн</span>
+                <div><div class="tard-bar"><div class="tb-fill" style="width:40%;background:var(--green)"></div></div></div>
+              </div>
+              <!-- row: bad -->
+              <div class="st-row" style="background:var(--red-bg)">
+                <div class="st-name"><div class="st-av" style="border:1px solid var(--red-bd)">ББ</div><div><div class="st-nm">Б.Батжаргал</div><div class="st-id">SS11</div></div></div>
+                <span class="tard-bad">−1ц 20мин</span>
+                <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red)">+50 давсан</span>
+                <span style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--red)">⛔ Хэтэрсэн</span>
+                <div><div class="tard-bar"><div class="tb-fill" style="width:100%;background:var(--red)"></div></div></div>
+              </div>
+              <!-- row: ok -->
+              <div class="st-row">
+                <div class="st-name"><div class="st-av">БН</div><div><div class="st-nm">Б.Наранзул</div><div class="st-id">SS09</div></div></div>
+                <span class="tard-zero">0 мин</span>
+                <span class="tard-ok">30 мин</span>
+                <span style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--green)">● Хэвийн</span>
+                <div><div class="tard-bar"><div class="tb-fill" style="width:0%;background:var(--green)"></div></div></div>
+              </div>
+              <!-- summary row -->
+              <div class="st-row" style="background:rgba(7,19,31,0.6)">
+                <div style="font-size:11px;font-weight:700;color:var(--sub)">Нийт дүн</div>
+                <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red)">−2ц 34мин</span>
+                <span style="font-size:10px;color:var(--sub)">10 ажилтан</span>
+                <span style="font-size:10px;color:var(--sub)">3 хэвийн · 1 анхааруулга · 1 хэтэрсэн</span>
+                <div></div>
+              </div>
+            </div>
+
+            <!-- PROJECT TABS -->
+            <div class="slbl">Бүх төслүүд</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div class="proj-tabs">
+                <div class="ptab on">Зураг төсөл</div>
+                <div class="ptab">Засал гүйцэтгэл</div>
+                <div class="ptab">Бүгд</div>
+              </div>
+              <div class="frow" style="margin-bottom:0">
+                <div class="fb on">Бүгд <span class="fc">14</span></div>
+                <div class="fb">Явцад <span class="fc">12</span></div>
+                <div class="fb">Хэтэрсэн <span class="fc">1</span></div>
+                <div class="fb">Дууссан <span class="fc">2</span></div>
+                <div class="srch-w"><span class="srch-ico">⌕</span><input placeholder="Хайх..."/></div>
+              </div>
+            </div>
+
+            <div class="pg">
+              <!-- Design card 1 - OVERDUE -->
+              <div class="pc ov">
+                <div class="pc-stripe" style="background:var(--red)"></div>
+                <div class="pc-hd">
+                  <div class="pc-inf">
+                    <div class="pc-meta"><span class="pc-code">SS26-12</span><span class="pc-type">· Орон сууц</span><span class="pri r">P8</span><span style="font-size:8px;color:var(--blue);background:var(--blue-bg);border:1px solid var(--blue-bd);padding:1px 5px;border-radius:3px;font-weight:600">ЗУРАГ</span></div>
+                    <div class="pc-nm">Хан-Уул орон сууц</div>
+                    <div class="pc-cli">Монгол Орон ХХК</div>
+                    <div class="pc-asgns"><div class="av-stk"><div class="av p">ХС</div><div class="av">НЖ</div></div><span class="pc-an">Х.Саран + Н.Жавхлан</span></div>
+                  </div>
+                  <div class="ring-sm"><svg width="46" height="46"><circle cx="23" cy="23" r="18" fill="none" stroke="rgba(255,90,90,0.15)" stroke-width="5"/><circle cx="23" cy="23" r="18" fill="none" stroke="var(--red)" stroke-width="5" stroke-linecap="round" stroke-dasharray="68 113"/></svg><div class="ring-sm-l"><span style="color:var(--red)">60%</span></div></div>
+                </div>
+                <div class="alert-row red"><span>⚠</span><span class="at">Хугацаа хэтэрсэн</span><span class="ad">31 өдөр</span></div>
+                <div class="rings8">
+                  <div class="r8g">
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-dasharray="75 75"/></svg><div class="mr-l"><span>100</span></div></div><div class="rn dn">Суд</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-dasharray="75 75"/></svg><div class="mr-l"><span>100</span></div></div><div class="rn dn">Төл</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-dasharray="75 75"/></svg><div class="mr-l"><span>100</span></div></div><div class="rn dn">Mood</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(79,140,255,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--blue)" stroke-width="3" stroke-linecap="round" stroke-dasharray="60 75"/></svg><div class="mr-l"><span>80</span></div></div><div class="rn on">Sk</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(79,140,255,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--blue)" stroke-width="3" stroke-linecap="round" stroke-dasharray="30 75"/></svg><div class="mr-l"><span>40</span></div></div><div class="rn on">Mod</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="var(--bd)" stroke-width="3"/></svg><div class="mr-l"><span style="color:var(--gray);font-size:7px">0</span></div></div><div class="rn td">Rnd</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="var(--bd)" stroke-width="3"/></svg><div class="mr-l"><span style="color:var(--gray);font-size:7px">0</span></div></div><div class="rn td">Зур</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="var(--bd)" stroke-width="3"/></svg><div class="mr-l"><span style="color:var(--gray);font-size:7px">0</span></div></div><div class="rn td">PPT</div></div>
+                  </div>
+                </div>
+                <div class="pc-ft"><div style="display:flex;align-items:center;gap:5px"><div class="av-stk"><div class="av p">ХС</div><div class="av">НЖ</div></div><span class="pc-an" style="margin-left:4px">2 хариуцагч</span></div><div><div class="pc-am">2400м² · ₮96M</div><div class="pc-dl">2026-04-10</div></div></div>
+              </div>
+
+              <!-- Construction card -->
+              <div class="cc active">
+                <div class="cc-stripe" style="background:var(--green)"></div>
+                <div class="cc-hd">
+                  <div class="cc-inf">
+                    <div class="cc-meta"><span class="cc-code">ZG26-01</span><span class="cc-type">· Лоунж</span><span style="font-size:8px;color:var(--green);background:var(--green-bg);border:1px solid var(--green-bd);padding:1px 5px;border-radius:3px;font-weight:600">ЗАСАЛ</span></div>
+                    <div class="cc-nm">Nubia Business Lounge</div>
+                    <div class="cc-cli">Nubia Group · 420м²</div>
+                  </div>
+                  <div class="ring-sm"><svg width="46" height="46"><circle cx="23" cy="23" r="18" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="5"/><circle cx="23" cy="23" r="18" fill="none" stroke="var(--green)" stroke-width="5" stroke-linecap="round" stroke-dasharray="51 113"/></svg><div class="ring-sm-l"><span style="color:var(--green)">45%</span></div></div>
+                </div>
+                <div class="con-stages">
+                  <div class="con-s-title">14 шатны явц</div>
+                  <div class="con-g">
+                    <div class="cst"><span class="cst-num">00</span><div class="cst-dot done"></div><span class="cst-name done">Гэрээ үнийн санал</span><span class="cst-pct done">100%</span></div>
+                    <div class="cst"><span class="cst-num">01</span><div class="cst-dot done"></div><span class="cst-name done">Талбайн бэлтгэл ажил</span><span class="cst-pct done">100%</span></div>
+                    <div class="cst"><span class="cst-num">02</span><div class="cst-dot done"></div><span class="cst-name done">Буулгалтын ажил</span><span class="cst-pct done">100%</span></div>
+                    <div class="cst"><span class="cst-num">03</span><div class="cst-dot done"></div><span class="cst-name done">Хог хаягдал зөөвөр</span><span class="cst-pct done">100%</span></div>
+                    <div class="cst"><span class="cst-num">04</span><div class="cst-dot done"></div><span class="cst-name done">Материал татан авалт</span><span class="cst-pct done">100%</span></div>
+                    <div class="cst"><span class="cst-num">05</span><div class="cst-dot active"></div><span class="cst-name active">Гипсэн ханын угсралт</span><span class="cst-pct active">65%</span></div>
+                    <div class="cst"><span class="cst-num">06</span><div class="cst-dot todo"></div><span class="cst-name todo">Гипсэн таазны угсралт</span><span class="cst-pct todo">0%</span></div>
+                    <div class="cst"><span class="cst-num">07–13</span><div class="cst-dot todo"></div><span class="cst-name todo" style="font-size:9.5px">Цахилгаан → Хаалга → PPT…</span><span class="cst-pct todo">–</span></div>
+                  </div>
+                </div>
+                <div class="cc-ft"><div style="display:flex;align-items:center;gap:5px"><div class="av-stk"><div class="av" style="background:var(--green-bg);color:var(--green)">НЖ</div></div><span style="font-size:10px;color:var(--sub);margin-left:4px">Н.Жавхлан</span></div><div><div class="pc-am">420м² · ₮85M</div><div style="font-family:var(--mono);font-size:9px;color:var(--sub)">2026-07-15</div></div></div>
+              </div>
+
+              <!-- Design card 2 -->
+              <div class="pc">
+                <div class="pc-stripe" style="background:var(--blue)"></div>
+                <div class="pc-hd">
+                  <div class="pc-inf">
+                    <div class="pc-meta"><span class="pc-code">SS26-13</span><span class="pc-type">· Оффис</span><span class="pri a">P9</span><span style="font-size:8px;color:var(--blue);background:var(--blue-bg);border:1px solid var(--blue-bd);padding:1px 5px;border-radius:3px;font-weight:600">ЗУРАГ</span></div>
+                    <div class="pc-nm">Skyline Business Center</div>
+                    <div class="pc-cli">Skyline Properties</div>
+                    <div class="pc-asgns"><div class="av-stk"><div class="av p">ГО</div></div><span class="pc-an">Г.Отгонбаяр</span></div>
+                  </div>
+                  <div class="ring-sm"><svg width="46" height="46"><circle cx="23" cy="23" r="18" fill="none" stroke="rgba(79,140,255,0.1)" stroke-width="5"/><circle cx="23" cy="23" r="18" fill="none" stroke="var(--blue)" stroke-width="5" stroke-linecap="round" stroke-dasharray="94 113"/></svg><div class="ring-sm-l"><span>83%</span></div></div>
+                </div>
+                <div class="rings8">
+                  <div class="r8g">
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-dasharray="75 75"/></svg><div class="mr-l"><span>100</span></div></div><div class="rn dn">Суд</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-dasharray="75 75"/></svg><div class="mr-l"><span>100</span></div></div><div class="rn dn">Төл</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-dasharray="75 75"/></svg><div class="mr-l"><span>100</span></div></div><div class="rn dn">Mood</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-dasharray="75 75"/></svg><div class="mr-l"><span>100</span></div></div><div class="rn dn">Sk</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-dasharray="75 75"/></svg><div class="mr-l"><span>100</span></div></div><div class="rn dn">Mod</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(79,140,255,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--blue)" stroke-width="3" stroke-linecap="round" stroke-dasharray="68 75"/></svg><div class="mr-l"><span>90</span></div></div><div class="rn on">Rnd</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="rgba(79,140,255,0.15)" stroke-width="3"/><circle cx="17" cy="17" r="12" fill="none" stroke="var(--blue)" stroke-width="3" stroke-linecap="round" stroke-dasharray="30 75"/></svg><div class="mr-l"><span>40</span></div></div><div class="rn on">Зур</div></div>
+                    <div class="r8c"><div class="mr"><svg width="34" height="34"><circle cx="17" cy="17" r="12" fill="none" stroke="var(--bd)" stroke-width="3"/></svg><div class="mr-l"><span style="color:var(--gray);font-size:7px">0</span></div></div><div class="rn td">PPT</div></div>
+                  </div>
+                </div>
+                <div class="pc-ft"><div style="display:flex;align-items:center;gap:5px"><div class="av p">ГО</div><span class="pc-an">Г.Отгонбаяр</span></div><div><div class="pc-am">3200м² · ₮72M</div><div class="pc-dl">2026-07-01</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     02 — ADD CONSTRUCTION PROJECT
+══════════════════════════════════ -->
+<div id="s2">
+  <div class="sh">
+    <div class="sh-n">ДЭЛГЭЦ 02 / 04</div>
+    <div class="sh-t">Засал гүйцэтгэлийн төсөл нэмэх</div>
+    <div class="sh-d">14 шатны ажлын цагийг оруулмагц гэрээний хугацаа Монгол ажлын хуанлиар автоматаар тооцоологдоно</div>
+  </div>
+  <div class="sw">
+    <div class="sf">
+      <div class="chrome">
+        <div class="cd" style="background:#FF5F57"></div>
+        <div class="cd" style="background:#FFBD2E"></div>
+        <div class="cd" style="background:#28CA41"></div>
+        <div class="curl"><span>🔒</span><span>os.sayasanaa.mn/design — Засал төсөл нэмэх</span></div>
+      </div>
+      <div class="modal-bg" style="min-height:680px">
+        <div class="modal" style="max-height:660px">
+          <!-- Type selector -->
+          <div class="mhd">
+            <div><div class="mhd-t">Шинэ төсөл нэмэх</div><div class="mhd-s">Төрлийг сонгоод мэдээллийг бөглөнө үү</div></div>
+            <div class="mx-btn">✕</div>
+          </div>
+          <div class="type-sel">
+            <div class="ts-opt">
+              <div class="ts-icon">🎨</div>
+              <div class="ts-title">Зураг төсөл</div>
+              <div class="ts-sub">8 шатны дизайн · Оффис, апартмент, ресторан...</div>
+            </div>
+            <div class="ts-opt on">
+              <div class="ts-icon">🔨</div>
+              <div class="ts-title">Засал гүйцэтгэл</div>
+              <div class="ts-sub">14 шатны засал · Гэрэл, хана, шал, таз...</div>
+            </div>
+          </div>
+
+          <div class="mbody">
+            <!-- 01 Үндсэн -->
+            <div>
+              <div class="fsec-hd"><span class="fsec-n">01</span><div class="fsec-rule"></div><span class="fsec-t">Үндсэн мэдээлэл</span></div>
+              <div class="fg2" style="margin-bottom:9px">
+                <div class="fg">
+                  <label class="flbl">Дотоод код</label>
+                  <div class="fi-valid fi mono on" style="display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--bg);border:1px solid var(--blue);border-radius:7px">
+                    <span>ZG26-02</span><span class="fi-ok">✓ ДАВХЦАХГҮЙ</span>
+                  </div>
+                </div>
+                <div class="fg"><label class="flbl">Зориулалт</label><div class="fi" style="color:var(--sub)">Оффис ▾</div></div>
+              </div>
+              <div class="fg" style="margin-bottom:9px">
+                <label class="flbl">Объектын нэр *</label>
+                <div class="fi on" style="font-size:14px;font-weight:600">Sky Business Center — 4-р давхар</div>
+              </div>
+              <div class="fg2">
+                <div class="fg"><label class="flbl">Захиалагч *</label><div class="fi">Sky Properties</div></div>
+                <div class="fg"><label class="flbl">Байршил</label><div class="fi">Хан-Уул, Зайсан</div></div>
+              </div>
+            </div>
+
+            <!-- 02 Priority -->
+            <div>
+              <div class="fsec-hd"><span class="fsec-n">02</span><div class="fsec-rule"></div><span class="fsec-t">Чухлын эрэмбэ</span><span style="font-size:9.5px;color:var(--sub);margin-left:6px">1 = хэвийн · 10 = яаралтай</span></div>
+              <div class="pri-row" style="margin-bottom:7px">
+                <div class="pri-btn">1</div><div class="pri-btn">2</div><div class="pri-btn">3</div><div class="pri-btn">4</div><div class="pri-btn sel">5</div><div class="pri-btn">6</div><div class="pri-btn">7</div><div class="pri-btn">8</div><div class="pri-btn hi">9</div><div class="pri-btn hi">10</div>
+              </div>
+              <div style="padding:7px 10px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;font-size:10px;color:var(--sub)"><span style="color:var(--blue);font-weight:700;font-family:var(--mono)">P5</span> — Дунд зэрэг чухал · Стандарт хугацааны дагуу</div>
+            </div>
+
+            <!-- 03 Талбай + огноо -->
+            <div>
+              <div class="fsec-hd"><span class="fsec-n">03</span><div class="fsec-rule"></div><span class="fsec-t">Талбай & Огноо</span></div>
+              <div class="date-pair">
+                <div class="dbox">
+                  <div class="db-l">Эхлэх огноо</div>
+                  <div class="db-v">2026-06-01</div>
+                  <div class="db-s">Даваа · Ажлын өдөр</div>
+                </div>
+                <div class="dbox auto">
+                  <div class="db-l">Дуусах огноо <span class="db-auto">AUTO</span></div>
+                  <div class="db-v">2026-08-14</div>
+                  <div class="db-s">Баасан · 55 ажлын өдөр</div>
+                </div>
+              </div>
+              <div class="fg2">
+                <div class="fg"><label class="flbl" style="color:var(--blue)">Нийт талбай (м²)</label><div class="fi big" style="display:flex;align-items:center;justify-content:space-between"><span>380</span><span style="font-size:12px;color:var(--sub);font-weight:400">м²</span></div></div>
+                <div class="fg"><label class="flbl">Гэрээний үнэ (₮)</label><div class="fi big" style="display:flex;align-items:center;justify-content:space-between"><span>95M</span><span style="font-size:12px;color:var(--sub);font-weight:400">₮</span></div></div>
+              </div>
+              <div class="ares" style="margin-top:9px">
+                <div class="arc b"><div class="arc-l">Нийт ажлын өдөр</div><div class="arc-v">55 өдөр</div></div>
+                <div class="arc b"><div class="arc-l">Нийт цаг</div><div class="arc-v">440 цаг</div></div>
+                <div class="arc g"><div class="arc-l">Гэрээний үнэ</div><div class="arc-v">₮95M</div></div>
+              </div>
+            </div>
+
+            <!-- 04 Construction hours per stage -->
+            <div>
+              <div class="fsec-hd"><span class="fsec-n">04</span><div class="fsec-rule"></div><span class="fsec-t">14 шатны тооцолсон цаг</span><span style="font-size:9.5px;color:var(--blue);margin-left:6px;font-family:var(--mono);font-weight:600">← оруулмагц дуусах огноо автомат</span></div>
+              <div class="hours-grid">
+                <div class="hg-item"><span class="hg-num">00</span><span class="hg-name">Гэрээ, үнийн санал</span><input class="hg-inp" value="16"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">01</span><span class="hg-name">Талбайн бэлтгэл</span><input class="hg-inp" value="24"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">02</span><span class="hg-name">Буулгалтын ажил</span><input class="hg-inp" value="40"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">03</span><span class="hg-name">Хог хаягдал</span><input class="hg-inp" value="16"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">04</span><span class="hg-name">Материал татан авалт</span><input class="hg-inp" value="32"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">05</span><span class="hg-name">Гипсэн ханын угсралт</span><input class="hg-inp" value="56"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">06</span><span class="hg-name">Гипсэн таазны угсралт</span><input class="hg-inp" value="48"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">07</span><span class="hg-name">Цахилгааны монтаж</span><input class="hg-inp" value="40"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">08</span><span class="hg-name">Хана, таазны засал</span><input class="hg-inp" value="48"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">09</span><span class="hg-name">Тавилгын захиалга</span><input class="hg-inp" value="24"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">10</span><span class="hg-name">Хаалга, шилэн хана</span><input class="hg-inp" value="32"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">11</span><span class="hg-name">Шалны ажил</span><input class="hg-inp" value="40"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">12</span><span class="hg-name">Талбайн цэвэрлэгээ</span><input class="hg-inp" value="16"/><span class="hg-u">ц</span></div>
+                <div class="hg-item"><span class="hg-num">13</span><span class="hg-name">Гэрээ, төлбөр хаах</span><input class="hg-inp" value="8"/><span class="hg-u">ц</span></div>
+              </div>
+              <div style="margin-top:8px;padding:8px 11px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:10px;color:var(--sub)">Нийт тооцолсон цаг:</span>
+                <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue)">440 цаг · 55 ажлын өдөр</span>
+              </div>
+              <div style="margin-top:6px;padding:8px 11px;background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:6px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:13px">🇲🇳</span>
+                <div><div style="font-size:10px;font-weight:600;color:var(--blue)">Монгол Улсын ажлын хуанли</div><div style="font-size:9.5px;color:var(--sub)">Да–Ба · 09:00–18:00 · 8ц/өдөр · Баяр амралтын өдрүүд хасагдсан</div></div>
+              </div>
+            </div>
+
+            <!-- 05 Хариуцагч -->
+            <div>
+              <div class="fsec-hd"><span class="fsec-n">05</span><div class="fsec-rule"></div><span class="fsec-t">Хариуцагч</span><span style="font-size:9.5px;color:var(--sub);margin-left:6px">1–5 хүн сонгох боломжтой</span></div>
+              <div class="ag">
+                <div class="ac sel"><div class="ac-ck">✓</div><div class="ac-top"><div class="ac-av" style="background:var(--green-bg);color:var(--green)">НЖ</div><span class="ac-id">SS03</span></div><div class="ac-nm">Н.Жавхлан</div><div class="ac-tl">Ерөнхий инженер</div></div>
+                <div class="ac"><div class="ac-top"><div class="ac-av">БГ</div><span class="ac-id">SS10</span></div><div class="ac-nm">Б.Гантулга</div><div class="ac-tl">Дизайнер</div></div>
+                <div class="ac"><div class="ac-top"><div class="ac-av">ДГ</div><span class="ac-id">SS14</span></div><div class="ac-nm">Д.Галмандах</div><div class="ac-tl">Архитектор</div></div>
+                <div class="ac"><div class="ac-top"><div class="ac-av">ДА</div><span class="ac-id">SS13</span></div><div class="ac-nm">Д.Аймерей</div><div class="ac-tl">Дизайнер</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="mft">
+            <div class="mft-h">✓ Бүх шаардлагатай талбар бөглөгдсөн</div>
+            <div class="mft-b">
+              <div class="btn-cx">Болих</div>
+              <div class="btn-sv green">Засал төсөл хадгалах</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     03 — CONSTRUCTION DETAIL PANEL
+══════════════════════════════════ -->
+<div id="s3">
+  <div class="sh">
+    <div class="sh-n">ДЭЛГЭЦ 03 / 04</div>
+    <div class="sh-t">Засал төслийн дэлгэрэнгүй</div>
+    <div class="sh-d">14 шат · Slider бүрт явц засах · Огноо автомат · Хариуцагчийн профайл</div>
+  </div>
+  <div class="sw">
+    <div class="sf">
+      <div class="chrome">
+        <div class="cd" style="background:#FF5F57"></div>
+        <div class="cd" style="background:#FFBD2E"></div>
+        <div class="cd" style="background:#28CA41"></div>
+        <div class="curl"><span>🔒</span><span>os.sayasanaa.mn/design/ZG26-01</span></div>
+      </div>
+      <div class="dp-layout">
+        <!-- blurred bg -->
+        <div class="dp-bg">
+          <div style="height:28px;background:var(--green-bg);border-radius:5px;margin-bottom:10px"></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <div style="height:180px;background:var(--green-bg);border:1px solid var(--green-bd);border-radius:8px"></div>
+            <div style="height:180px;background:var(--surf);border:1px solid var(--bd);border-radius:8px"></div>
+            <div style="height:180px;background:var(--surf);border:1px solid var(--bd);border-radius:8px"></div>
+          </div>
+        </div>
+        <!-- Panel -->
+        <div class="dp">
+          <div class="dp-hd">
+            <div class="dp-tag active">🔨 ЗАСАЛ ГҮЙЦЭТГЭЛ · ЯВЦАД</div>
+            <div class="dp-code">ZG26-01 · P5 · Лоунж</div>
+            <div class="dp-t">Nubia Business Lounge</div>
+            <div class="dp-s">Nubia Group · Хан-Уул дүүрэг · 420м²</div>
+            <div class="dp-x">✕</div>
+          </div>
+          <div class="dp-body">
+            <!-- Assignees -->
+            <div>
+              <div class="dp-sh">Хариуцагч</div>
+              <div class="asgn-cards">
+                <div class="asgn-card">
+                  <div class="asgn-av" style="color:var(--green)">НЖ</div>
+                  <div>
+                    <div class="asgn-nm">Н.Жавхлан</div>
+                    <div style="display:flex;align-items:center;gap:6px"><span class="asgn-id" style="color:var(--green)">SS03</span><span class="asgn-rl">Ерөнхий инженер</span></div>
+                    <div class="asgn-bg"><span class="abg main" style="color:var(--green);border-color:var(--green-bd);background:var(--green-bg)">Гол хариуцагч</span><span class="abg" style="color:var(--green);border-color:var(--green-bd)">Онлайн</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Info -->
+            <div>
+              <div class="dp-sh">Мэдээлэл</div>
+              <div class="infot" style="margin-bottom:9px">
+                <div class="irow"><div class="ik"><div class="ik-c">1.1</div><div class="ik-l">Код</div></div><div class="iv mono">ZG26-01</div></div>
+                <div class="irow"><div class="ik"><div class="ik-c">1.5</div><div class="ik-l">Талбай</div></div><div class="iv mono">420м²</div></div>
+                <div class="irow"><div class="ik"><div class="ik-c">1.6</div><div class="ik-l">Хугацаа</div></div><div class="iv mono" style="font-size:10.5px">2026-04-01 → 2026-07-15</div></div>
+                <div class="irow"><div class="ik"><div class="ik-c">1.7</div><div class="ik-l">Гэрээний үнэ</div></div><div class="iv" style="font-size:14px;font-weight:700;color:var(--green)">₮85M</div></div>
+              </div>
+              <div class="kpis">
+                <div class="kc"><div class="kc-v b">55 өдөр</div><div class="kc-l">Нийт хоног</div></div>
+                <div class="kc"><div class="kc-v g">45%</div><div class="kc-l">Явц</div></div>
+                <div class="kc"><div class="kc-v g">₮85M</div><div class="kc-l">Гэрээний үнэ</div></div>
+              </div>
+            </div>
+            <!-- Overall progress -->
+            <div>
+              <div class="dp-sh">14 шатны явц <span style="margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green)">45%</span></div>
+              <div class="overall">
+                <div class="ov-ring">
+                  <svg width="54" height="54"><circle cx="27" cy="27" r="21" fill="none" stroke="rgba(50,213,131,0.1)" stroke-width="5"/><circle cx="27" cy="27" r="21" fill="none" stroke="var(--green)" stroke-width="5" stroke-linecap="round" stroke-dasharray="59 132"/></svg>
+                  <div class="ov-rl"><span style="color:var(--green);font-size:13px">45%</span></div>
+                </div>
+                <div class="ov-info">
+                  <div class="ov-lbl">Нийт явц</div>
+                  <div class="ov-bar-wrap"><div class="ov-bar-fill" style="width:45%;background:var(--green)"></div></div>
+                  <div class="ov-note">6 шат дууссан · 1 явцад · 7 хүлээж байна</div>
+                </div>
+                <div class="ov-pct" style="color:var(--green)">45%</div>
+              </div>
+
+              <!-- 14 stage detail list -->
+              <div class="cst-detail">
+                <!-- done stages -->
+                <div class="cstd"><span class="cstd-num">00</span><div class="cstd-dot done"></div><span class="cstd-name done">Гэрээ үнийн санал</span><div class="cstd-right"><span class="cstd-hrs">16ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="rgba(50,213,131,0.12)" stroke-width="2.5"/><circle cx="14" cy="14" r="10" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="63 63"/></svg><div class="cstd-ring-l"><span style="color:var(--green)">✓</span></div></div></div></div>
+                <div class="cstd"><span class="cstd-num">01</span><div class="cstd-dot done"></div><span class="cstd-name done">Талбайн бэлтгэл ажил</span><div class="cstd-right"><span class="cstd-hrs">24ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="rgba(50,213,131,0.12)" stroke-width="2.5"/><circle cx="14" cy="14" r="10" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="63 63"/></svg><div class="cstd-ring-l"><span style="color:var(--green)">✓</span></div></div></div></div>
+                <div class="cstd"><span class="cstd-num">02</span><div class="cstd-dot done"></div><span class="cstd-name done">Буулгалтын ажил</span><div class="cstd-right"><span class="cstd-hrs">40ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="rgba(50,213,131,0.12)" stroke-width="2.5"/><circle cx="14" cy="14" r="10" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="63 63"/></svg><div class="cstd-ring-l"><span style="color:var(--green)">✓</span></div></div></div></div>
+                <div class="cstd"><span class="cstd-num">03</span><div class="cstd-dot done"></div><span class="cstd-name done">Хог хаягдал зөөвөр</span><div class="cstd-right"><span class="cstd-hrs">16ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="rgba(50,213,131,0.12)" stroke-width="2.5"/><circle cx="14" cy="14" r="10" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="63 63"/></svg><div class="cstd-ring-l"><span style="color:var(--green)">✓</span></div></div></div></div>
+                <div class="cstd"><span class="cstd-num">04</span><div class="cstd-dot done"></div><span class="cstd-name done">Материал татан авалт</span><div class="cstd-right"><span class="cstd-hrs">32ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="rgba(50,213,131,0.12)" stroke-width="2.5"/><circle cx="14" cy="14" r="10" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="63 63"/></svg><div class="cstd-ring-l"><span style="color:var(--green)">✓</span></div></div></div></div>
+                <!-- active stage -->
+                <div class="cstd on"><span class="cstd-num">05</span><div class="cstd-dot active"></div><span class="cstd-name active">Гипсэн ханын угсралт</span><div class="cstd-right"><span class="cstd-hrs">56ц</span><div class="cstd-slider" style="width:52px"><div class="cstd-sf" style="width:65%;background:var(--blue)"></div><div class="cstd-sth" style="left:65%;background:var(--blue);border-color:var(--surf)"></div></div><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="rgba(79,140,255,0.12)" stroke-width="2.5"/><circle cx="14" cy="14" r="10" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="41 63"/></svg><div class="cstd-ring-l"><span style="color:var(--blue)">65</span></div></div></div></div>
+                <!-- todo stages -->
+                <div class="cstd"><span class="cstd-num">06</span><div class="cstd-dot todo"></div><span class="cstd-name todo">Гипсэн таазны угсралт</span><div class="cstd-right"><span class="cstd-hrs">48ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="var(--bd)" stroke-width="2.5"/></svg><div class="cstd-ring-l"><span style="color:var(--gray);font-size:7px">0%</span></div></div></div></div>
+                <div class="cstd"><span class="cstd-num">07</span><div class="cstd-dot todo"></div><span class="cstd-name todo">Цахилгааны монтаж, угсралт</span><div class="cstd-right"><span class="cstd-hrs">40ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="var(--bd)" stroke-width="2.5"/></svg><div class="cstd-ring-l"><span style="color:var(--gray);font-size:7px">0%</span></div></div></div></div>
+                <div class="cstd"><span class="cstd-num">08</span><div class="cstd-dot todo"></div><span class="cstd-name todo">Хана, таазны засал</span><div class="cstd-right"><span class="cstd-hrs">48ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="var(--bd)" stroke-width="2.5"/></svg><div class="cstd-ring-l"><span style="color:var(--gray);font-size:7px">0%</span></div></div></div></div>
+                <div class="cstd"><span class="cstd-num">09</span><div class="cstd-dot todo"></div><span class="cstd-name todo">Тавилгын захиалга</span><div class="cstd-right"><span class="cstd-hrs">24ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="var(--bd)" stroke-width="2.5"/></svg><div class="cstd-ring-l"><span style="color:var(--gray);font-size:7px">0%</span></div></div></div></div>
+                <div class="cstd"><span class="cstd-num">10</span><div class="cstd-dot todo"></div><span class="cstd-name todo">Хаалга, шилэн хана, хаалганы зах.</span><div class="cstd-right"><span class="cstd-hrs">32ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="var(--bd)" stroke-width="2.5"/></svg><div class="cstd-ring-l"><span style="color:var(--gray);font-size:7px">0%</span></div></div></div></div>
+                <div class="cstd"><span class="cstd-num">11</span><div class="cstd-dot todo"></div><span class="cstd-name todo">Шалны ажил</span><div class="cstd-right"><span class="cstd-hrs">40ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="var(--bd)" stroke-width="2.5"/></svg><div class="cstd-ring-l"><span style="color:var(--gray);font-size:7px">0%</span></div></div></div></div>
+                <div class="cstd"><span class="cstd-num">12</span><div class="cstd-dot todo"></div><span class="cstd-name todo">Талбайн цэвэрлэгээ</span><div class="cstd-right"><span class="cstd-hrs">16ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="var(--bd)" stroke-width="2.5"/></svg><div class="cstd-ring-l"><span style="color:var(--gray);font-size:7px">0%</span></div></div></div></div>
+                <div class="cstd"><span class="cstd-num">13</span><div class="cstd-dot todo"></div><span class="cstd-name todo">Гэрээ · Төлбөр тооцоо хаах</span><div class="cstd-right"><span class="cstd-hrs">8ц</span><div class="cstd-ring"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="var(--bd)" stroke-width="2.5"/></svg><div class="cstd-ring-l"><span style="color:var(--gray);font-size:7px">0%</span></div></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     04 — TV DASHBOARD
+══════════════════════════════════ -->
+<div id="s4">
+  <div class="sh">
+    <div class="sh-n">ДЭЛГЭЦ 04 / 04</div>
+    <div class="sh-t">TV Dashboard · 24/7</div>
+    <div class="sh-d">Зураг + Засал төслүүд нэгэн зэрэг · Хариуцагчийн нэр · Приоритет · LIVE ticker</div>
+  </div>
+  <div class="sw">
+    <div class="sf">
+      <div style="height:2px;background:var(--blue)"></div>
+      <div class="tv">
+        <div class="tv-hd">
+          <div class="tv-brand">
+            <div class="tv-mk">SS</div>
+            <div><div class="tv-nm">САЯСАНАА OS</div><div class="tv-sub">Design & Construction · Live 24/7</div></div>
+            <div class="live"><div class="live-d"></div><span class="live-t">LIVE</span></div>
+            <div class="tv-kpis">
+              <div class="tvk"><div class="tvkv b">12</div><div class="tvkl">Зураг төсөл</div></div>
+              <div class="tvk"><div class="tvkv g">2</div><div class="tvkl">Засал төсөл</div></div>
+              <div class="tvk"><div class="tvkv r">1</div><div class="tvkl">Хэтэрсэн</div></div>
+              <div class="tvk"><div class="tvkv">68%</div><div class="tvkl">Дундаж явц</div></div>
+            </div>
+          </div>
+          <div class="tv-clock"><div class="tv-time">09:42:18</div><div class="tv-date">2026-05-11 · Даваа</div></div>
+        </div>
+        <div class="tv-ov">
+          <span>⚠</span><span>Хугацаа хэтэрсэн:</span>
+          <span class="tv-ov-chip">SS26-12 · P8 — Хан-Уул орон сууц (31 өдөр)</span>
+        </div>
+        <div class="tv-grid-area">
+          <div class="tv-grid">
+            <!-- TV card 1 OVERDUE DESIGN -->
+            <div class="tvc ov">
+              <div class="tvc-top" style="background:var(--red)"></div>
+              <div class="tvc-type design">ЗУРАГ · P8</div>
+              <div class="tvc-code" style="color:var(--blue)">SS26-12</div>
+              <div class="tvc-nm">Хан-Уул орон сууц</div>
+              <div class="tvc-cli">Монгол Орон ХХК</div>
+              <div class="tvc-ov">⚠ 31 ӨДӨР ХЭТЭРСЭН</div>
+              <div class="tvc-asgns"><div class="tvc-av p">ХС</div><div class="tvc-av">НЖ</div><span class="tvc-at">Х.Саран + 1</span></div>
+              <div class="tvc-pct">60%</div>
+              <div class="tvc-prog"><div class="tvc-fill" style="width:60%;background:var(--red)"></div></div>
+              <div class="tvc-rings">
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="2"/><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-dasharray="41 41"/></svg><div class="tvr-l"><span>100</span></div></div><div class="tvr-n">Суд</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="2"/><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-dasharray="41 41"/></svg><div class="tvr-l"><span>100</span></div></div><div class="tvr-n">Төл</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="2"/><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-dasharray="41 41"/></svg><div class="tvr-l"><span>100</span></div></div><div class="tvr-n">Mood</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="rgba(79,140,255,0.15)" stroke-width="2"/><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-dasharray="33 41"/></svg><div class="tvr-l"><span>80</span></div></div><div class="tvr-n">Sk</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="rgba(79,140,255,0.15)" stroke-width="2"/><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-dasharray="16 41"/></svg><div class="tvr-l"><span>40</span></div></div><div class="tvr-n">Mod</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--bd)" stroke-width="2"/></svg><div class="tvr-l"><span style="color:var(--gray)">0</span></div></div><div class="tvr-n">Rnd</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--bd)" stroke-width="2"/></svg><div class="tvr-l"><span style="color:var(--gray)">0</span></div></div><div class="tvr-n">Зур</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--bd)" stroke-width="2"/></svg><div class="tvr-l"><span style="color:var(--gray)">0</span></div></div><div class="tvr-n">PPT</div></div>
+              </div>
+              <div class="tvc-ft"><span class="tvcf-a">Х.Саран + Н.Жавхлан</span><span class="tvcf-d">−31 өдөр</span></div>
+            </div>
+
+            <!-- TV card 2 CONSTRUCTION -->
+            <div class="tvc con">
+              <div class="tvc-top" style="background:var(--green)"></div>
+              <div class="tvc-type con">ЗАСАЛ · P5</div>
+              <div class="tvc-code" style="color:var(--green)">ZG26-01</div>
+              <div class="tvc-nm">Nubia Business Lounge</div>
+              <div class="tvc-cli">Nubia Group · 420м²</div>
+              <div class="tvc-asgns"><div class="tvc-av pg">НЖ</div><span class="tvc-at">Н.Жавхлан</span></div>
+              <div class="tvc-pct">45%</div>
+              <div class="tvc-prog"><div class="tvc-fill" style="width:45%;background:var(--green)"></div></div>
+              <!-- Construction mini steps -->
+              <div style="display:flex;flex-direction:column;gap:2px;flex:1">
+                <div style="display:flex;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0"></div><span style="font-size:7px;color:var(--sub)">00–04 Дууссан</span><span style="font-family:var(--mono);font-size:7px;color:var(--green);margin-left:auto">5/14</span></div>
+                <div style="display:flex;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0"></div><span style="font-size:7px;color:var(--blue);font-weight:600">05 Гипсэн хана — 65%</span></div>
+                <div style="display:flex;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent;border:1px solid var(--bd);flex-shrink:0"></div><span style="font-size:7px;color:var(--gray)">06–13 Хүлээж байна</span></div>
+              </div>
+              <div class="tvc-ft"><span class="tvcf-a" style="color:var(--green)">Н.Жавхлан</span><span class="tvcf-d" style="color:var(--sub)">65 өдөр</span></div>
+            </div>
+
+            <!-- TV card 3 DESIGN -->
+            <div class="tvc">
+              <div class="tvc-top" style="background:var(--blue)"></div>
+              <div class="tvc-type design">ЗУРАГ · P9</div>
+              <div class="tvc-code" style="color:var(--blue)">SS26-13</div>
+              <div class="tvc-nm">Skyline Business Center</div>
+              <div class="tvc-cli">Skyline Properties</div>
+              <div class="tvc-asgns"><div class="tvc-av p">ГО</div><span class="tvc-at">Г.Отгонбаяр</span></div>
+              <div class="tvc-pct">83%</div>
+              <div class="tvc-prog"><div class="tvc-fill" style="width:83%;background:var(--blue)"></div></div>
+              <div class="tvc-rings">
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="2"/><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-dasharray="41 41"/></svg><div class="tvr-l"><span>100</span></div></div><div class="tvr-n">Суд</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="2"/><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-dasharray="41 41"/></svg><div class="tvr-l"><span>100</span></div></div><div class="tvr-n">Төл</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="rgba(50,213,131,0.15)" stroke-width="2"/><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-dasharray="41 41"/></svg><div class="tvr-l"><span>100</span></div></div><div class="tvr-n">Mod</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="rgba(79,140,255,0.15)" stroke-width="2"/><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-dasharray="37 41"/></svg><div class="tvr-l"><span>90</span></div></div><div class="tvr-n">Rnd</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="rgba(79,140,255,0.15)" stroke-width="2"/><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-dasharray="16 41"/></svg><div class="tvr-l"><span>40</span></div></div><div class="tvr-n">Зур</div></div>
+                <div class="tvc-rc"><div class="tvr"><svg width="19" height="19"><circle cx="9.5" cy="9.5" r="6.5" fill="none" stroke="var(--bd)" stroke-width="2"/></svg><div class="tvr-l"><span style="color:var(--gray)">0</span></div></div><div class="tvr-n">PPT</div></div>
+                <div class="tvc-rc"></div><div class="tvc-rc"></div>
+              </div>
+              <div class="tvc-ft"><span class="tvcf-a">Г.Отгонбаяр</span><span class="tvcf-d">51 өдөр</span></div>
+            </div>
+
+            <!-- TV card 4 CONSTRUCTION 2 -->
+            <div class="tvc" style="border-color:var(--green-bd);background:rgba(50,213,131,0.04)">
+              <div class="tvc-top" style="background:var(--green)"></div>
+              <div class="tvc-type con">ЗАСАЛ · P4</div>
+              <div class="tvc-code" style="color:var(--green)">ZG26-02</div>
+              <div class="tvc-nm">Sky Business Center</div>
+              <div class="tvc-cli">Sky Properties · 380м²</div>
+              <div class="tvc-asgns"><div class="tvc-av pg">НЖ</div><div class="tvc-av">БГ</div><span class="tvc-at">Н.Жавхлан + 1</span></div>
+              <div class="tvc-pct" style="color:var(--green)">12%</div>
+              <div class="tvc-prog"><div class="tvc-fill" style="width:12%;background:var(--green)"></div></div>
+              <div style="display:flex;flex-direction:column;gap:2px;flex:1">
+                <div style="display:flex;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0"></div><span style="font-size:7px;color:var(--blue);font-weight:600">00 Гэрээ — 80%</span></div>
+                <div style="display:flex;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent;border:1px solid var(--bd);flex-shrink:0"></div><span style="font-size:7px;color:var(--gray)">01–13 Хүлээж байна</span></div>
+              </div>
+              <div class="tvc-ft"><span class="tvcf-a" style="color:var(--green)">Н.Жавхлан + Б.Гантулга</span><span class="tvcf-d" style="color:var(--sub)">2026-08-14</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="ticker">
+          <span class="tk-l">● LIVE</span>
+          <div class="tk-s">
+            <span class="ti ov"><span class="tc">SS26-12 · ЗУРАГ · P8</span>  Хан-Уул орон сууц  <span class="tp" style="color:var(--red)">60%</span>  Х.Саран   ·   </span>
+            <span class="ti"><span class="tc">ZG26-01 · ЗАСАЛ · P5</span>  Nubia Business Lounge  <span class="tp" style="color:var(--green)">45%</span>  Н.Жавхлан   ·   </span>
+            <span class="ti"><span class="tc">SS26-13 · ЗУРАГ · P9</span>  Skyline Business Center  <span class="tp">83%</span>  Г.Отгонбаяр   ·   </span>
+            <span class="ti"><span class="tc">ZG26-02 · ЗАСАЛ · P4</span>  Sky Business Center  <span class="tp" style="color:var(--green)">12%</span>  Н.Жавхлан   ·   </span>
+            <span class="ti"><span class="tc">SS26-02 · ЗУРАГ · P5</span>  Naran Mandal Office  <span class="tp">50%</span>  Б.Батжаргал + 2   ·   </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom -->
+  <div style="max-width:1380px;margin:28px auto 64px;padding:0 28px">
+    <div style="background:var(--surf);border:1px solid var(--bd);border-radius:10px;padding:32px;text-align:center">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--blue);letter-spacing:0.12em;margin-bottom:10px">SAVASANAA OS · v4.0</div>
+      <div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;margin-bottom:7px">Бүрэн дижитал удирдлагын систем</div>
+      <div style="font-size:12.5px;color:var(--sub);margin-bottom:18px;line-height:1.65">Зураг төсөл · Засал гүйцэтгэл · Санхүү · Операшн · Барилга · HR · Дотоод журам</div>
+      <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+        <span style="padding:4px 13px;border:1px solid var(--blue-bd);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--blue)">Next.js 14</span>
+        <span style="padding:4px 13px;border:1px solid var(--bd);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--sub)">TypeScript</span>
+        <span style="padding:4px 13px;border:1px solid var(--bd);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--sub)">Supabase</span>
+        <span style="padding:4px 13px;border:1px solid var(--bd);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--sub)">Tailwind</span>
+        <span style="padding:4px 13px;border:1px solid var(--green-bd);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--green)">Vercel</span>
+        <span style="padding:4px 13px;border:1px solid var(--bd);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--sub)">Inter</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var ids=['s1','s2','s3','s4'];
+function sc(i){document.getElementById(ids[i]).scrollIntoView({behavior:'smooth'});}
+window.addEventListener('scroll',function(){
+  var s=document.documentElement.scrollTop;
+  var h=document.documentElement.scrollHeight-document.documentElement.clientHeight;
+  document.getElementById('prog').style.width=(s/h*100)+'%';
+  var mid=window.innerHeight*.45; var cur=0;
+  ids.forEach(function(id,i){var r=document.getElementById(id).getBoundingClientRect();if(r.top<=mid)cur=i;});
+  document.querySelectorAll('.nd').forEach(function(d,i){d.classList.toggle('on',i===cur);});
+});
+</script>
+</body>
+</html>

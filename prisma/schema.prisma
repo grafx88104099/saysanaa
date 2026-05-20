@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  PM
+  DESIGNER
+  ACCOUNTANT
+  CLIENT
+}
+
+enum SkillLevel {
+  NONE
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  passwordHash     String
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean   @default(false)
+  lastLoginAt      DateTime?
+  employee         Employee?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Employee {
+  id             String     @id @default(cuid())
+  userId         String     @unique
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName      String
+  lastName       String
+  phone          String?
+  registerNumber String?    @unique
+  photoUrl       String?
+  role           Role       @default(DESIGNER)
+  profession     String?
+  autocadLevel   SkillLevel @default(NONE)
+  sketchupLevel  SkillLevel @default(NONE)
+  languages      String[]   @default([])
+  active         Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  target    String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([createdAt])
+}

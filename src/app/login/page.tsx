@@ -1,12 +1,17 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { loginAction, type LoginState } from "./actions";
 
-function SubmitBtn() {
+function SubmitBtn({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="btn-primary w-full mt-2">
+    <button
+      type="submit"
+      disabled={disabled || pending}
+      className="w-full mt-2 h-11 rounded-md bg-white text-black text-[13px] font-semibold transition
+                 hover:bg-white/90 disabled:bg-white/10 disabled:text-white/30 disabled:cursor-not-allowed"
+    >
       {pending ? "Шалгаж байна…" : "Нэвтрэх"}
     </button>
   );
@@ -14,71 +19,72 @@ function SubmitBtn() {
 
 export default function LoginPage() {
   const [state, action] = useActionState<LoginState, FormData>(loginAction, undefined);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const canSubmit = email.trim().length > 0 && password.length > 0;
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-[380px]">
-        <div className="flex items-center gap-3 mb-8 justify-center">
-          <div className="w-10 h-10 rounded-lg bg-blue flex items-center justify-center font-extrabold text-white">
-            S
+    <main className="min-h-screen flex items-center justify-center px-4 bg-black text-white">
+      <div className="w-full max-w-[340px]">
+        <h1 className="text-[15px] font-medium text-center mb-8 tracking-tight">Нэвтрэх</h1>
+
+        <form action={action} className="space-y-3">
+          <input
+            name="email"
+            type="email"
+            autoComplete="username"
+            required
+            placeholder="И-мэйл"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full h-11 bg-transparent border border-white/15 rounded-md px-3 text-[13px]
+                       placeholder:text-white/40 focus:outline-none focus:border-white/50 transition"
+          />
+          <div className="relative">
+            <input
+              name="password"
+              type={showPw ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              placeholder="Нууц үг"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-11 bg-transparent border border-white/15 rounded-md pl-3 pr-11 text-[13px]
+                         placeholder:text-white/40 focus:outline-none focus:border-white/50 transition"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              tabIndex={-1}
+              aria-label={showPw ? "Нууц үг нуух" : "Нууц үг харах"}
+              className="absolute right-1 top-1 bottom-1 w-9 flex items-center justify-center
+                         text-white/40 hover:text-white transition rounded"
+            >
+              {showPw ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                  <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                  <line x1="2" y1="2" x2="22" y2="22" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              )}
+            </button>
           </div>
-          <div>
-            <div className="text-[16px] font-extrabold tracking-tight">SayaSanaa OS</div>
-            <div className="text-[10px] text-sub font-mono uppercase tracking-widest">
-              Interior Studio · Internal
+
+          {state?.error && (
+            <div className="text-[12px] text-white/70 border border-white/20 rounded-md px-3 py-2">
+              {state.error}
             </div>
-          </div>
-        </div>
+          )}
 
-        <div className="card p-7">
-          <h1 className="text-[18px] font-extrabold mb-1">Нэвтрэх</h1>
-          <p className="text-sub text-[12px] mb-5">
-            Системд хандахын тулд бүртгэлтэй и-мэйл, нууц үгээ оруулна уу.
-          </p>
-
-          <form action={action} className="space-y-3">
-            <div>
-              <label htmlFor="email" className="label">И-мэйл</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="username"
-                required
-                placeholder="name@saysanaa.mn"
-                className="input"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="label">Нууц үг</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                placeholder="••••••••"
-                className="input"
-              />
-            </div>
-
-            {state?.error && (
-              <div className="text-[12px] text-red bg-red/10 border border-red/25 rounded-md px-3 py-2">
-                {state.error}
-              </div>
-            )}
-
-            <SubmitBtn />
-          </form>
-
-          <div className="text-[11px] text-sub mt-5 text-center">
-            Бүртгэл асуудалтай бол админд хандана уу.
-          </div>
-        </div>
-
-        <div className="text-center text-[10px] text-sub/70 mt-6 font-mono uppercase tracking-widest">
-          v0.1 · 2026
-        </div>
+          <SubmitBtn disabled={!canSubmit} />
+        </form>
       </div>
     </main>
   );

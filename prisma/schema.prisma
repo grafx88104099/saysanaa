@@ -24,6 +24,33 @@ enum SkillLevel {
   EXPERT
 }
 
+enum ProjectType {
+  DESIGN
+  BUILD
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  DOING
+  REVIEW
+  DONE
+  BLOCKED
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
 model User {
   id               String    @id @default(cuid())
   email            String    @unique
@@ -51,8 +78,161 @@ model Employee {
   sketchupLevel  SkillLevel @default(NONE)
   languages      String[]   @default([])
   active         Boolean    @default(true)
+  assignments    ProjectAssignment[]
+  assignedTasks  Task[]              @relation("TaskAssignee")
+  taskComments   TaskComment[]       @relation("TaskCommenter")
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
+}
+
+model Project {
+  id            String              @id @default(cuid())
+  code          String              @unique
+  type          ProjectType
+  status        ProjectStatus       @default(DRAFT)
+  name          String
+  purpose       String?
+  clientName    String
+  location      String?
+  priority      Int                 @default(5)
+  areaM2        Float?
+  contractValue Decimal?            @db.Decimal(14, 2)
+  startDate     DateTime?
+  endDate       DateTime?
+  totalHours    Int                 @default(0)
+  totalWorkDays Int                 @default(0)
+  progressPct   Int                 @default(0)
+  notes         String?
+  contractUrl   String?
+  contractName  String?
+  contractAt    DateTime?
+  phases        ProjectPhase[]
+  assignments   ProjectAssignment[]
+  createdBy     String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([type, status])
+  @@index([code])
+}
+
+model ProjectPhase {
+  id             String    @id @default(cuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ordinal        Int
+  name           String
+  hours          Int
+  progressPct    Int       @default(0)
+  progressLocked Boolean   @default(false)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  tasks          Task[]
+
+  @@unique([projectId, ordinal])
+  @@index([projectId])
+}
+
+model Task {
+  id             String       @id @default(cuid())
+  phaseId        String
+  phase          ProjectPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  ordinal        Int
+  title          String
+  description    String?
+  status         TaskStatus   @default(TODO)
+  priority       TaskPriority @default(NORMAL)
+  estimatedHours Float?
+  actualHours    Float?
+  dueDate        DateTime?
+  startedAt      DateTime?
+  completedAt   DateTime?
+  blockedReason  String?
+  assigneeId     String?
+  assignee       Employee?    @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  checklist   TaskChecklist[]
+  attachments TaskAttachment[]
+  comments    TaskComment[]
+
+  @@index([phaseId, ordinal])
+  @@index([assigneeId, status])
+  @@index([dueDate])
+}
+
+model TaskChecklist {
+  id      String  @id @default(cuid())
+  taskId  String
+  task    Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  ordinal Int
+  text    String
+  done    Boolean @default(false)
+
+  @@index([taskId, ordinal])
+}
+
+model TaskAttachment {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  url        String
+  name       String
+  size       Int?
+  uploadedBy String
+  createdAt  DateTime @default(now())
+
+  @@index([taskId])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    Employee @relation("TaskCommenter", fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([taskId, createdAt])
+}
+
+model ProjectAssignment {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  role       String?
+  isLead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@unique([projectId, employeeId])
+  @@index([employeeId])
+}
+
+model Holiday {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  name      String
+  createdBy String
+  createdAt DateTime @default(now())
+
+  @@unique([date])
+}
+
+model KioskToken {
+  id         String    @id @default(cuid())
+  token      String    @unique
+  label      String
+  createdBy  String
+  lastSeenAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([revokedAt])
 }
 
 model AuditLog {

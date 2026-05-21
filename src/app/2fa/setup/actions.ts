@@ -1,7 +1,7 @@
 "use server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { generateSecret, otpauthUrl, qrDataUrl, verifyToken } from "@/lib/totp";
+import { generateSecret, otpauthUrl, qrSvg, verifyToken } from "@/lib/totp";
 import { audit } from "@/lib/audit";
 import { redirect } from "next/navigation";
 
@@ -17,7 +17,7 @@ export async function startSetup() {
     await prisma.user.update({ where: { id: user.id }, data: { twoFactorSecret: secret } });
   }
   const url = otpauthUrl(user.email, secret);
-  const qr = await qrDataUrl(url);
+  const qr = await qrSvg(url);
   return { secret, qr };
 }
 

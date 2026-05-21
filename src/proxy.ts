@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const PUBLIC = ["/login", "/2fa", "/api/auth"];
+const PUBLIC = ["/login", "/2fa", "/api/auth", "/display", "/api/display"];
 const COOKIE = "saysanaa_session";
 
 function isPublic(path: string) {

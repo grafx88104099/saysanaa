@@ -3,27 +3,48 @@
 @tailwind utilities;
 
 @layer base {
-  html, body { background: #020609; color: #F8FAFC; }
-  body { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
-  ::selection { background: rgba(79,140,255,0.35); }
+  html, body {
+    background: #0B0D10;
+    color: #EBEDF0;
+  }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection {
+    background: rgba(235, 237, 240, 0.16);
+  }
 }
 
 @layer components {
-  .card { @apply bg-surf border border-bd rounded-lg; }
   .input {
-    @apply w-full bg-bg border border-bd rounded-md px-3 py-2 text-tx text-[13px]
-           placeholder:text-sub/60 focus:outline-none focus:border-blue/60
-           focus:ring-1 focus:ring-blue/40 transition;
+    @apply w-full h-11 bg-transparent border border-white/12 rounded-md px-3 text-[13px]
+           placeholder:text-white/30 focus:outline-none focus:border-white/45 transition;
   }
-  .label { @apply block text-[11px] font-semibold uppercase tracking-wider text-sub mb-1.5; }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-[12px] font-bold transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed; }
-  .btn-primary { @apply btn bg-blue text-white hover:bg-blue/90; }
-  .btn-ghost { @apply btn border border-bd text-sub hover:text-tx hover:border-sub; }
-  .btn-danger { @apply btn bg-red text-white hover:bg-red/90; }
-  .chip { @apply inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider; }
-  .chip-blue { @apply chip bg-blue/10 text-blue border border-blue/20; }
-  .chip-green { @apply chip bg-green/10 text-green border border-green/20; }
-  .chip-amber { @apply chip bg-amber/10 text-amber border border-amber/20; }
-  .chip-red { @apply chip bg-red/10 text-red border border-red/25; }
-  .chip-gray { @apply chip bg-sub/10 text-sub border border-bd; }
+  .label {
+    @apply block text-[11px] font-medium text-white/55 mb-1.5;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 h-10 rounded-md px-4 text-[12px] font-medium transition cursor-pointer disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-white text-black hover:bg-white/90 disabled:bg-white/10 disabled:text-white/30;
+  }
+  .btn-ghost {
+    @apply btn border border-white/12 text-white/70 hover:text-white hover:border-white/35 hover:bg-white/[0.02];
+  }
+  .btn-danger {
+    @apply btn border border-white/20 text-white hover:bg-white hover:text-black;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider border;
+  }
+  .chip-on   { @apply chip bg-white/95 text-black border-white/95; }
+  .chip-off  { @apply chip border-white/10 text-white/40; }
+  .chip-soft { @apply chip border-white/20 text-white/70; }
 }

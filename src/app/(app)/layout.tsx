@@ -21,6 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     fullName: `${user.employee.lastName} ${user.employee.firstName}`.trim(),
     initials:
       (user.employee.lastName?.[0] ?? "") + (user.employee.firstName?.[0] ?? ""),
+    photoUrl: user.employee.photoUrl,
   };
 
   return (

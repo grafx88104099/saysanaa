@@ -2,6 +2,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
+import PhotoUploader from "@/components/PhotoUploader";
+import Select from "@/components/Select";
 import type { Role, SkillLevel } from "@prisma/client";
 import {
   ROLE_LABEL,
@@ -10,7 +12,7 @@ import {
   SKILL_LEVELS,
   LANGUAGE_OPTIONS,
 } from "@/lib/labels";
-import type { FormState } from "@/app/(app)/employees/actions";
+import type { FormState } from "@/app/(app)/admin/employees/actions";
 
 type Initial = {
   email?: string;
@@ -52,7 +54,7 @@ export default function EmployeeForm({
   return (
     <form action={formAction} className="space-y-5">
       {state?.error && (
-        <div className="text-[12px] text-red bg-red/10 border border-red/25 rounded-md px-3 py-2">
+        <div className="text-[12px] text-white/80 border border-white/25 rounded-md px-3 py-2">
           {state.error}
         </div>
       )}
@@ -94,13 +96,8 @@ export default function EmployeeForm({
               className="input uppercase"
             />
           </Field>
-          <Field label="Зургийн URL" error={fe.photoUrl}>
-            <input
-              name="photoUrl"
-              defaultValue={initial?.photoUrl ?? ""}
-              placeholder="https://..."
-              className="input"
-            />
+          <Field label="Зураг" error={fe.photoUrl}>
+            <PhotoUploader name="photoUrl" initialUrl={initial?.photoUrl ?? null} />
           </Field>
         </Row>
       </Section>
@@ -108,11 +105,11 @@ export default function EmployeeForm({
       <Section title="Эрх ба албан тушаал">
         <Row>
           <Field label="Системийн эрх (Role)" required>
-            <select name="role" defaultValue={initial?.role ?? "DESIGNER"} className="input" required>
-              {ROLES.map((r) => (
-                <option key={r} value={r}>{ROLE_LABEL[r]}</option>
-              ))}
-            </select>
+            <Select
+              name="role"
+              defaultValue={initial?.role ?? "DESIGNER"}
+              options={ROLES.map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
+            />
           </Field>
           <Field label="Мэргэжил / Албан тушаал">
             <input
@@ -128,18 +125,18 @@ export default function EmployeeForm({
       <Section title="Ур чадвар">
         <Row>
           <Field label="AutoCAD түвшин">
-            <select name="autocadLevel" defaultValue={initial?.autocadLevel ?? "NONE"} className="input">
-              {SKILL_LEVELS.map((s) => (
-                <option key={s} value={s}>{SKILL_LABEL[s]}</option>
-              ))}
-            </select>
+            <Select
+              name="autocadLevel"
+              defaultValue={initial?.autocadLevel ?? "NONE"}
+              options={SKILL_LEVELS.map((s) => ({ value: s, label: SKILL_LABEL[s] }))}
+            />
           </Field>
           <Field label="SketchUp түвшин">
-            <select name="sketchupLevel" defaultValue={initial?.sketchupLevel ?? "NONE"} className="input">
-              {SKILL_LEVELS.map((s) => (
-                <option key={s} value={s}>{SKILL_LABEL[s]}</option>
-              ))}
-            </select>
+            <Select
+              name="sketchupLevel"
+              defaultValue={initial?.sketchupLevel ?? "NONE"}
+              options={SKILL_LEVELS.map((s) => ({ value: s, label: SKILL_LABEL[s] }))}
+            />
           </Field>
         </Row>
         <Field label="Эзэмшсэн хэл">
@@ -149,14 +146,14 @@ export default function EmployeeForm({
               return (
                 <label
                   key={l.code}
-                  className="flex items-center gap-2 px-3 py-1.5 border border-bd rounded-md text-[12px] cursor-pointer hover:border-blue/40 has-[:checked]:bg-blue/10 has-[:checked]:border-blue/40 has-[:checked]:text-blue"
+                  className="flex items-center gap-2 px-3 py-1.5 border border-white/15 rounded-md text-[12px] text-white/70 cursor-pointer hover:border-white/40 hover:text-white has-[:checked]:bg-white has-[:checked]:text-black has-[:checked]:border-white transition"
                 >
                   <input
                     type="checkbox"
                     name="languages"
                     value={l.code}
                     defaultChecked={checked}
-                    className="accent-blue"
+                    className="accent-white"
                   />
                   {l.label}
                 </label>
@@ -175,10 +172,10 @@ export default function EmployeeForm({
               minLength={8}
               required
               defaultValue=""
-              className="input font-mono"
+              className="input"
               placeholder="Saysanaa@2026"
             />
-            <div className="text-[11px] text-sub mt-1.5">
+            <div className="text-[11px] text-white/40 mt-1.5">
               Ажилтан анх удаа нэвтрэхдээ энэ нууц үгийг ашиглаад, 2FA-аа тохируулна.
             </div>
           </Field>
@@ -195,8 +192,8 @@ export default function EmployeeForm({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="card p-5">
-      <div className="text-[10px] font-bold uppercase tracking-widest text-sub mb-4 pb-2 border-b border-bd">
+    <div className="border border-white/10 rounded-lg p-5">
+      <div className="text-[10px] font-medium uppercase tracking-wider text-white/45 mb-4 pb-3 border-b border-white/10">
         {title}
       </div>
       <div className="space-y-3">{children}</div>
@@ -222,10 +219,10 @@ function Field({
   return (
     <div>
       <label className="label">
-        {label} {required && <span className="text-red">*</span>}
+        {label} {required && <span className="text-white/70">*</span>}
       </label>
       {children}
-      {error && <div className="text-[11px] text-red mt-1">{error}</div>}
+      {error && <div className="text-[11px] text-white/70 mt-1">{error}</div>}
     </div>
   );
 }

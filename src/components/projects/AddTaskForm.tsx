@@ -6,6 +6,7 @@ import {
   type CreateTaskState,
 } from "@/app/(app)/admin/projects/[id]/tasks/actions";
 import type { EmpOption } from "@/components/EmployeeMultiPicker";
+import Select from "@/components/Select";
 
 function Submit() {
   const { pending } = useFormStatus();
@@ -76,18 +77,16 @@ export default function AddTaskForm({
           required
           className="h-8 bg-transparent border border-white/12 rounded px-2 text-[12px] focus:outline-none focus:border-white/45"
         />
-        <select
+        <Select
           name="assigneeId"
           defaultValue=""
-          className="h-8 bg-transparent border border-white/12 rounded px-2 text-[11px] focus:outline-none focus:border-white/45 [color-scheme:dark]"
-        >
-          <option value="">Хариуцагч —</option>
-          {assignees.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.fullName}
-            </option>
-          ))}
-        </select>
+          size="sm"
+          placeholder="Хариуцагч —"
+          options={[
+            { value: "", label: "Хариуцагч —" },
+            ...assignees.map((a) => ({ value: a.id, label: a.fullName })),
+          ]}
+        />
         <input
           name="dueDate"
           type="date"
@@ -102,15 +101,16 @@ export default function AddTaskForm({
           placeholder="ц"
           className="h-8 bg-transparent border border-white/12 rounded px-2 text-[11px] text-right tabular-nums focus:outline-none focus:border-white/45"
         />
-        <select
+        <Select
           name="priority"
           defaultValue="NORMAL"
-          className="h-8 bg-transparent border border-white/12 rounded px-2 text-[11px] focus:outline-none focus:border-white/45 [color-scheme:dark]"
-        >
-          <option value="LOW">Бага</option>
-          <option value="NORMAL">Дунд</option>
-          <option value="HIGH">Өндөр</option>
-        </select>
+          size="sm"
+          options={[
+            { value: "LOW", label: "Бага" },
+            { value: "NORMAL", label: "Дунд" },
+            { value: "HIGH", label: "Өндөр" },
+          ]}
+        />
         <div className="flex items-center gap-1">
           <Submit />
           <button

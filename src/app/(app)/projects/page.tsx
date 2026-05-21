@@ -30,9 +30,9 @@ export default async function MyProjectsPage() {
   });
 
   return (
-    <div className="max-w-[1200px] mx-auto">
+    <div className="max-w-7xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-[22px] font-semibold tracking-tight">
+        <h1 className="text-[24px] font-semibold tracking-tight">
           {isManager ? "Бүх төсөл" : "Миний төсөл"}
         </h1>
         <p className="text-white/45 text-[12px] mt-1">
@@ -55,7 +55,7 @@ export default async function MyProjectsPage() {
               <Link
                 key={p.id}
                 href={`/projects/${p.id}`}
-                className="border border-white/10 rounded-lg p-5 hover:border-white/25 hover:bg-white/[0.02] transition group"
+                className="card-hover rounded-lg p-5 group"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <span

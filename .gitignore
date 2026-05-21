@@ -9,3 +9,7 @@ node_modules/
 tsconfig.tsbuildinfo
 .vercel
 next-env.d.ts
+
+# Local design notes / scratchpad
+/өмнө санаа/
+*.xlsx

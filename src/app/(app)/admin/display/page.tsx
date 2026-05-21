@@ -10,9 +10,9 @@ export default async function AdminDisplayPage() {
   const tokens = await listKioskTokens();
 
   return (
-    <div className="max-w-[860px] mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-[22px] font-semibold tracking-tight">Дэлгэц удирдлага</h1>
+        <h1 className="text-[24px] font-semibold tracking-tight">Дэлгэц удирдлага</h1>
         <p className="text-white/45 text-[12px] mt-1">
           Ажлын зааланы wall display-уудад зориулсан kiosk token-уудыг үүсгэх, удирдах
         </p>

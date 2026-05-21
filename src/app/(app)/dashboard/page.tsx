@@ -38,9 +38,9 @@ export default async function Dashboard() {
   ]);
 
   return (
-    <div className="max-w-[1200px] mx-auto py-8 px-2">
+    <div className="max-w-7xl mx-auto py-8 px-2">
       <div className="mb-10">
-        <h1 className="text-[24px] font-semibold tracking-tight">Хяналтын самбар</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight">Хяналтын самбар</h1>
         <p className="text-white/45 text-[13px] mt-1">Системийн ерөнхий байдал</p>
       </div>
 
@@ -76,7 +76,7 @@ export default async function Dashboard() {
                   <Link
                     key={p.id}
                     href={`/projects/${p.id}`}
-                    className="block border border-white/10 rounded-md p-3 hover:border-white/25 transition"
+                    className="block card-hover rounded-md p-3"
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <span
@@ -152,7 +152,7 @@ function QuickLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="block border border-white/10 rounded-md px-4 py-3 text-[13px] text-white/75 hover:text-white hover:border-white/25 transition"
+      className="block card-hover rounded-md px-4 py-3 text-[13px] text-white/75 hover:text-white"
     >
       {label}
     </Link>

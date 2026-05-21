@@ -32,6 +32,30 @@ export async function addHolidayAction(_prev: AddState, formData: FormData): Pro
   return { ok: true };
 }
 
+/**
+ * Календарийн day cell дээр товшоод оруулсан амралт.
+ */
+export async function quickAddHolidayAction(date: string, name: string) {
+  const me = await requireRole("ADMIN");
+  const parsed = addSchema.safeParse({ date, name: name.trim() });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message } as const;
+  const exists = await prisma.holiday.findUnique({
+    where: { date: new Date(parsed.data.date) },
+  });
+  if (exists) return { error: "Энэ огноо аль хэдийн бүртгэгдсэн" } as const;
+  await prisma.holiday.create({
+    data: {
+      date: new Date(parsed.data.date),
+      name: parsed.data.name,
+      createdBy: me.uid,
+    },
+  });
+  invalidateHolidayCache();
+  await audit("holiday.add", me.uid, parsed.data.date, { name: parsed.data.name });
+  revalidatePath("/admin/holidays");
+  return { ok: true } as const;
+}
+
 export async function deleteHolidayAction(id: string) {
   const me = await requireRole("ADMIN");
   const h = await prisma.holiday.findUnique({ where: { id } });

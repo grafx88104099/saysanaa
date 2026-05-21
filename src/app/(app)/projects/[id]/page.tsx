@@ -70,7 +70,7 @@ export default async function MyProjectDetailPage({ params }: { params: Promise<
     p.progressPct >= 100 ? "#3FCF8E" : p.progressPct >= 50 ? "#8B95FF" : "#E5B85C";
 
   return (
-    <div className="max-w-[1100px] mx-auto">
+    <div className="max-w-7xl mx-auto">
       <div className="flex items-center gap-2 text-[12px] text-white/45 mb-5">
         <Link href="/projects" className="hover:text-white transition">Миний төсөл</Link>
         <span>/</span>
@@ -100,7 +100,7 @@ export default async function MyProjectDetailPage({ params }: { params: Promise<
             </span>
             <span className="text-[11px] text-white/45">{PROJECT_TYPE_LABEL[p.type]}</span>
           </div>
-          <h1 className="text-[22px] font-semibold tracking-tight">{p.name}</h1>
+          <h1 className="text-[24px] font-semibold tracking-tight">{p.name}</h1>
           <div className="text-white/55 text-[13px] mt-1">
             {p.clientName}
             {p.location && <> · {p.location}</>}

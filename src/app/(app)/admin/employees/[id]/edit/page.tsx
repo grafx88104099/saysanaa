@@ -20,7 +20,7 @@ export default async function EditEmployeePage({ params }: { params: Promise<{ i
   const action = updateEmployeeAction.bind(null, emp.id);
 
   return (
-    <div className="max-w-[900px] mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="flex items-center gap-2 text-[12px] text-white/45 mb-5">
         <Link href="/admin/employees" className="hover:text-white transition">Ажилтан</Link>
         <span>/</span>
@@ -30,7 +30,7 @@ export default async function EditEmployeePage({ params }: { params: Promise<{ i
         <span>/</span>
         <span className="text-white/80">Засах</span>
       </div>
-      <h1 className="text-[22px] font-semibold tracking-tight mb-6">Ажилтны мэдээлэл засах</h1>
+      <h1 className="text-[24px] font-semibold tracking-tight mb-6">Ажилтны мэдээлэл засах</h1>
       <EmployeeForm
         mode="edit"
         action={action}

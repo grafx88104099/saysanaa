@@ -35,10 +35,10 @@ export default async function EmployeesList({
   });
 
   return (
-    <div className="max-w-[1280px] mx-auto">
+    <div className="max-w-7xl mx-auto">
       <div className="flex items-end justify-between mb-6">
         <div>
-          <h1 className="text-[22px] font-semibold tracking-tight">Ажилтны бүртгэл</h1>
+          <h1 className="text-[24px] font-semibold tracking-tight">Ажилтны бүртгэл</h1>
           <div className="text-white/45 text-[12px] mt-1">Нийт {employees.length} бичлэг</div>
         </div>
         <Link href="/admin/employees/new" className="btn-primary">Ажилтан нэмэх</Link>

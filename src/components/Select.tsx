@@ -8,11 +8,15 @@ export default function Select({
   options,
   defaultValue,
   placeholder = "Сонгох",
+  size = "md",
+  disabled = false,
 }: {
   name: string;
   options: SelectOption[];
   defaultValue?: string;
   placeholder?: string;
+  size?: "sm" | "md";
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(defaultValue ?? "");
@@ -77,11 +81,17 @@ export default function Select({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
-        onClick={() => setOpen((o) => !o)}
-        onKeyDown={onKeyDown}
-        className={`w-full h-11 bg-transparent border rounded-md px-3 text-[13px] text-left
+        onClick={() => !disabled && setOpen((o) => !o)}
+        onKeyDown={(e) => !disabled && onKeyDown(e)}
+        disabled={disabled}
+        className={`w-full bg-transparent border rounded-md px-3 text-left
                     flex items-center justify-between gap-2 transition
-                    ${open ? "border-white/45" : "border-white/12 hover:border-white/25"}`}
+                    ${size === "sm" ? "h-8 text-[12px]" : "h-11 text-[14px]"}
+                    ${disabled
+                      ? "border-white/8 cursor-default"
+                      : open
+                      ? "border-white/45"
+                      : "border-white/12 hover:border-white/25"}`}
       >
         <span className={current ? "text-white" : "text-white/30"}>
           {current?.label ?? placeholder}

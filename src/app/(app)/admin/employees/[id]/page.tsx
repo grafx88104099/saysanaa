@@ -20,7 +20,7 @@ export default async function EmployeeDetail({ params }: { params: Promise<{ id:
   const isAdmin = me.role === "ADMIN";
 
   return (
-    <div className="max-w-[960px] mx-auto">
+    <div className="max-w-7xl mx-auto">
       <div className="flex items-center gap-2 text-[12px] text-white/45 mb-5">
         <Link href="/admin/employees" className="hover:text-white transition">Ажилтан</Link>
         <span>/</span>
@@ -38,7 +38,7 @@ export default async function EmployeeDetail({ params }: { params: Promise<{ id:
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-[22px] font-semibold tracking-tight">
+            <h1 className="text-[24px] font-semibold tracking-tight">
               {emp.lastName} {emp.firstName}
             </h1>
             {emp.active ? (

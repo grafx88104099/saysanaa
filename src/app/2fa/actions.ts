@@ -33,7 +33,7 @@ export async function verify2faAction(_prev: VerifyState, formData: FormData): P
   redirect("/dashboard");
 }
 
-export async function logoutAction() {
+export async function logoutAction(_formData?: FormData) {
   const s = await readSession();
   if (s) await audit("logout", s.uid);
   await clearSession();

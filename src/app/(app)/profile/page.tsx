@@ -17,9 +17,9 @@ export default async function ProfilePage() {
   const emp = user.employee;
 
   return (
-    <div className="max-w-[860px] mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-[22px] font-semibold tracking-tight">Миний профайл</h1>
+        <h1 className="text-[24px] font-semibold tracking-tight">Миний профайл</h1>
         <p className="text-white/45 text-[12px] mt-1">
           Өөрийн мэдээллээ удирдах, нууц үгээ солих
         </p>

@@ -33,8 +33,8 @@ export default async function NewProjectPage() {
       : MN_HOLIDAYS_2026.map((h) => h.date);
 
   return (
-    <div className="max-w-[1100px] mx-auto">
-      <h1 className="text-[22px] font-semibold tracking-tight mb-6">Шинэ төсөл нэмэх</h1>
+    <div className="max-w-7xl mx-auto">
+      <h1 className="text-[24px] font-semibold tracking-tight mb-6">Шинэ төсөл нэмэх</h1>
       <ProjectForm
         mode="create"
         initial={{

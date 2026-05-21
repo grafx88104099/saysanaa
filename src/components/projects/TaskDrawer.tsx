@@ -14,6 +14,7 @@ import {
 import { fmtAgoRelative, fmtBytes, fmtDate, fmtDateTime } from "@/lib/format";
 import { TASK_PRIORITIES, TASK_PRIORITY_LABEL } from "@/lib/labels";
 import type { EmpOption } from "@/components/EmployeeMultiPicker";
+import Select from "@/components/Select";
 
 export type TaskDetail = {
   id: string;
@@ -145,33 +146,28 @@ export default function TaskDrawer({
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="Хариуцагч">
-                <select
+                <Select
                   name="assigneeId"
                   defaultValue={task.assigneeId ?? ""}
+                  size="sm"
                   disabled={!canManage}
-                  className="w-full h-9 bg-transparent border border-white/12 rounded px-2 text-[12px] focus:outline-none focus:border-white/45 [color-scheme:dark]"
-                >
-                  <option value="">—</option>
-                  {assignees.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.fullName}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: "", label: "—" },
+                    ...assignees.map((a) => ({ value: a.id, label: a.fullName })),
+                  ]}
+                />
               </Field>
               <Field label="Чухал">
-                <select
+                <Select
                   name="priority"
                   defaultValue={task.priority}
+                  size="sm"
                   disabled={!canManage}
-                  className="w-full h-9 bg-transparent border border-white/12 rounded px-2 text-[12px] focus:outline-none focus:border-white/45 [color-scheme:dark]"
-                >
-                  {TASK_PRIORITIES.map((p) => (
-                    <option key={p} value={p}>
-                      {TASK_PRIORITY_LABEL[p]}
-                    </option>
-                  ))}
-                </select>
+                  options={TASK_PRIORITIES.map((p) => ({
+                    value: p,
+                    label: TASK_PRIORITY_LABEL[p],
+                  }))}
+                />
               </Field>
               <Field label="Дуусах огноо">
                 <input

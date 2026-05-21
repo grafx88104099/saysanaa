@@ -41,7 +41,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
     holidayKeys.size > 0 ? Array.from(holidayKeys) : MN_HOLIDAYS_2026.map((h) => h.date);
 
   return (
-    <div className="max-w-[1100px] mx-auto">
+    <div className="max-w-7xl mx-auto">
       <div className="flex items-center gap-2 text-[12px] text-white/45 mb-5">
         <Link href="/admin/projects" className="hover:text-white transition">Төсөл</Link>
         <span>/</span>
@@ -51,7 +51,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         <span>/</span>
         <span className="text-white/80">Засах</span>
       </div>
-      <h1 className="text-[22px] font-semibold tracking-tight mb-6">Төсөл засах</h1>
+      <h1 className="text-[24px] font-semibold tracking-tight mb-6">Төсөл засах</h1>
       <ProjectForm
         mode="edit"
         initial={{

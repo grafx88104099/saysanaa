@@ -451,7 +451,6 @@ export async function closeProjectAction(
 
   // Resolve actualGrade (validation outside transaction for fast error return)
   let actualGrade = null as { id: string; key: string; label: string } | null;
-  let preloadedGradeLevel: { id: string; key: string; label: string } | null = null;
   if (d.actualGradeLevelId) {
     const lv = await prisma.kpiGradeLevel.findUnique({ where: { id: d.actualGradeLevelId } });
     if (!lv) return { error: "Зэрэглэл буруу" };
@@ -459,7 +458,15 @@ export async function closeProjectAction(
   }
 
   const now = new Date();
-  let raceWinResult: { workHours: number; clientWaitHours: number; revisionHours: number; efficiency: number; onTime: boolean } | null = null;
+  // Mutable box pattern: TS does not narrow object property assignments inside async callbacks,
+  // so the values written inside the transaction stay typed for the post-tx audit log.
+  const result = {
+    workHours: 0,
+    clientWaitHours: 0,
+    revisionHours: 0,
+    efficiency: 0,
+    onTime: true,
+  };
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -485,7 +492,6 @@ export async function closeProjectAction(
           label: project.gradeLevel.label,
         };
       }
-      preloadedGradeLevel = project.gradeLevel;
 
       // Aggregate time entries
       let workHours = 0;
@@ -506,7 +512,11 @@ export async function closeProjectAction(
         endOfDay.setHours(23, 59, 59, 999);
         onTime = now <= endOfDay;
       }
-      raceWinResult = { workHours, clientWaitHours, revisionHours, efficiency, onTime };
+      result.workHours = workHours;
+      result.clientWaitHours = clientWaitHours;
+      result.revisionHours = revisionHours;
+      result.efficiency = efficiency;
+      result.onTime = onTime;
 
       await tx.project.update({
         where: { id: projectId },
@@ -555,15 +565,12 @@ export async function closeProjectAction(
     throw e;
   }
 
-  // Silence unused-var linter — preloadedGradeLevel is captured during tx but not needed after
-  void preloadedGradeLevel;
-
   await audit("project.close", me.uid, projectId, {
     qualityRating: d.qualityRating,
     clientSatisfaction: d.clientSatisfaction,
     actualGrade: actualGrade?.key,
-    efficiency: raceWinResult?.efficiency.toFixed(2),
-    onTime: raceWinResult?.onTime,
+    efficiency: result.efficiency.toFixed(2),
+    onTime: result.onTime,
   });
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);

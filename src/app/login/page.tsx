@@ -2,6 +2,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { loginAction, type LoginState } from "./actions";
+import Logo from "@/components/Logo";
 
 function SubmitBtn({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
@@ -28,14 +29,8 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center px-4 text-white">
       <div className="w-full max-w-[360px] panel p-8 shadow-[0_0_60px_rgba(106,166,255,0.22)]">
-        <div className="flex justify-center mb-6">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo.jpg"
-            alt="SAYSANAA"
-            className="logo-invert h-10 w-auto select-none pointer-events-none"
-            draggable={false}
-          />
+        <div className="flex justify-center mb-6 text-tx">
+          <Logo height={44} />
         </div>
         <p className="text-[12px] text-center text-sub mb-6 uppercase tracking-[0.18em]">Нэвтрэх</p>
 

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
+import Logo from "@/components/Logo";
 
 type Item = { href: string; label: string; icon: React.ReactNode; roles?: Role[] };
 type Group = { title?: string; roles?: Role[]; items: Item[] };
@@ -113,14 +114,12 @@ export default function Sidebar({ role }: { role: Role }) {
   return (
     <aside className="w-[200px] bg-black/80 backdrop-blur-xl border-r border-bd flex flex-col flex-shrink-0">
       <div className="h-14 flex items-center px-4 border-b border-bd">
-        <Link href="/dashboard" className="flex items-center justify-center w-full" aria-label="SAYSANAA">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo.jpg"
-            alt="SAYSANAA"
-            className="logo-invert h-7 w-auto select-none pointer-events-none"
-            draggable={false}
-          />
+        <Link
+          href="/dashboard"
+          className="flex items-center justify-center w-full text-tx"
+          aria-label="SAYSANAA"
+        >
+          <Logo height={26} />
         </Link>
       </div>
       <nav className="flex-1 py-3 space-y-4">

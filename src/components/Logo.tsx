@@ -1,62 +1,64 @@
 /**
- * SAYSANAA wordmark — inline SVG.
- * Self-contained, scales crisp at any size, no 404 risk on deploys.
- * Set `height` (px) — width auto via viewBox.
+ * Official SAYSANAA wordmark — vector paths sourced from
+ * https://saysanaa.mn/wp-content/uploads/2022/11/Logo-Light.svg
+ *
+ * Self-contained inline SVG: no external asset, no 404 risk.
+ * Set `height` (px); width auto via viewBox. Inherits `currentColor` —
+ * uses `fill` so the wordmark adopts whatever `color` the parent sets.
  */
 export default function Logo({
   height = 32,
-  showTagline = true,
   className,
 }: {
   height?: number;
-  showTagline?: boolean;
   className?: string;
 }) {
-  // viewBox width chosen so default scale ≈ original logo aspect (roof 60 + text 380 ≈ 12:1)
   return (
     <svg
       height={height}
-      viewBox="0 0 460 100"
+      viewBox="0 0 230 80"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       role="img"
       aria-label="SAYSANAA"
     >
-      {/* House-roof icon: two peaks (signature triangle silhouette) */}
-      <g fill="currentColor">
-        <path d="M5 70 L40 25 L60 50 L46 50 L46 70 Z" />
-        <path d="M48 70 L70 42 L92 70 Z" />
-      </g>
-
-      {/* SAYSANAA wordmark */}
-      <text
-        x="110"
-        y="58"
-        fontFamily="Inter, system-ui, sans-serif"
-        fontSize="44"
-        fontWeight="700"
-        letterSpacing="2"
+      <path
+        d="M32.59 31.1504L26.65 35.5404L24.2 34.0004V40.6204L26.58 41.9804L23.37 44.0304V39.2504L22.39 38.6804L17.37 42.3904L17.38 48.8504L32.55 39.2504L47.65 48.7804V42.3104L32.59 31.1504Z"
         fill="currentColor"
-      >
-        SAYSANAA
-      </text>
-
-      {/* artify tagline */}
-      {showTagline && (
-        <text
-          x="240"
-          y="88"
-          fontFamily="Inter, system-ui, sans-serif"
-          fontSize="16"
-          fontWeight="300"
-          letterSpacing="6"
-          fill="currentColor"
-          opacity="0.7"
-        >
-          artify
-        </text>
-      )}
+      />
+      <path
+        d="M90.03 31.4805H87.42L79.16 48.8505H82.46L83.86 45.9205H93.61L95.01 48.8505H98.31L90.03 31.4805ZM85.25 42.9805L88.73 35.6605L92.21 42.9805H85.25Z"
+        fill="currentColor"
+      />
+      <path
+        d="M144.68 31.4805H142.07L133.81 48.8505H137.11L138.51 45.9205H148.26L149.66 48.8505H152.96L144.68 31.4805ZM139.89 42.9805L143.37 35.6605L146.85 42.9805H139.89Z"
+        fill="currentColor"
+      />
+      <path
+        d="M184.29 31.4805H181.68L173.42 48.8505H176.72L178.12 45.9205H187.87L189.27 48.8505H192.57L184.29 31.4805ZM179.51 42.9805L182.99 35.6605L186.47 42.9805H179.51Z"
+        fill="currentColor"
+      />
+      <path
+        d="M204.37 31.4805H201.76L193.5 48.8505H196.8L198.2 45.9205H207.95L209.35 48.8505H212.65L204.37 31.4805ZM199.58 42.9805L203.06 35.6605L206.54 42.9805H199.58Z"
+        fill="currentColor"
+      />
+      <path
+        d="M113.58 31.4805L105.32 48.8505H102.02L103.42 45.9205L96.55 31.4805H99.85L105.06 42.4505L110.28 31.4805H113.58Z"
+        fill="currentColor"
+      />
+      <path
+        d="M171.43 31.4805V48.8505H165.72L158.86 34.4105H158.15V48.8505H155.06V31.4805H160.76L167.62 45.9105H168.33V31.4805H171.43Z"
+        fill="currentColor"
+      />
+      <path
+        d="M77.45 31.4805V34.4205H67.39C66.21 34.4205 65.25 35.3805 65.25 36.5605C65.25 37.7405 66.21 38.7005 67.39 38.7005H73.2C76 38.7005 78.28 40.9705 78.28 43.7805C78.28 46.5805 76.01 48.8605 73.2 48.8605H62.33V45.9205H73.04C74.22 45.9205 75.18 44.9605 75.18 43.7805C75.18 42.6005 74.22 41.6405 73.04 41.6405H67.23C64.43 41.6405 62.15 39.3705 62.15 36.5605C62.15 33.7605 64.42 31.4805 67.23 31.4805H77.45Z"
+        fill="currentColor"
+      />
+      <path
+        d="M132.19 31.4805V34.4205H122.13C120.95 34.4205 119.99 35.3805 119.99 36.5605C119.99 37.7405 120.95 38.7005 122.13 38.7005H127.94C130.74 38.7005 133.02 40.9705 133.02 43.7805C133.02 46.5805 130.75 48.8605 127.94 48.8605H117.07V45.9205H127.78C128.96 45.9205 129.92 44.9605 129.92 43.7805C129.92 42.6005 128.96 41.6405 127.78 41.6405H121.97C119.17 41.6405 116.89 39.3705 116.89 36.5605C116.89 33.7605 119.16 31.4805 121.97 31.4805H132.19Z"
+        fill="currentColor"
+      />
     </svg>
   );
 }

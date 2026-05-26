@@ -61,6 +61,18 @@ const Icons = {
       <line x1="12" y1="17" x2="12" y2="21" />
     </svg>
   ),
+  Gauge: (
+    <svg {...ICON_PROPS}>
+      <path d="M12 14l4-4" />
+      <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+    </svg>
+  ),
+  Clock: (
+    <svg {...ICON_PROPS}>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  ),
 };
 
 const GROUPS: Group[] = [
@@ -68,6 +80,8 @@ const GROUPS: Group[] = [
     items: [
       { href: "/dashboard", label: "Хяналт", icon: Icons.Dashboard },
       { href: "/projects", label: "Миний төсөл", icon: Icons.Folder },
+      { href: "/time", label: "Цагийн бүртгэл", icon: Icons.Clock },
+      { href: "/me/kpi", label: "Миний KPI", icon: Icons.Gauge },
     ],
   },
   {
@@ -80,16 +94,33 @@ const GROUPS: Group[] = [
       { href: "/admin/display", label: "Дэлгэц", icon: Icons.Monitor, roles: ["ADMIN"] },
     ],
   },
+  {
+    title: "KPI аргачлал",
+    roles: ["ADMIN", "PM"],
+    items: [
+      { href: "/admin/kpi/team",       label: "Багийн KPI",          icon: Icons.Users },
+      { href: "/admin/kpi/reports",    label: "Тайлан",              icon: Icons.Gauge },
+      { href: "/admin/kpi/timeline",   label: "Хугацааны норматив", icon: Icons.Gauge, roles: ["ADMIN"] },
+      { href: "/admin/kpi/grading",    label: "Зэрэглэл",           icon: Icons.Gauge, roles: ["ADMIN"] },
+      { href: "/admin/kpi/experience", label: "Туршлагын муж",       icon: Icons.Gauge, roles: ["ADMIN"] },
+    ],
+  },
 ];
 
 export default function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-[200px] bg-black border-r border-white/10 flex flex-col flex-shrink-0">
-      <div className="h-14 flex items-center px-5 border-b border-white/10">
-        <Link href="/dashboard" className="text-[14px] font-semibold tracking-tight">
-          SayaSanaa
+    <aside className="w-[200px] bg-black/80 backdrop-blur-xl border-r border-bd flex flex-col flex-shrink-0">
+      <div className="h-14 flex items-center px-4 border-b border-bd">
+        <Link href="/dashboard" className="flex items-center justify-center w-full" aria-label="SAYSANAA">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.jpg"
+            alt="SAYSANAA"
+            className="logo-invert h-7 w-auto select-none pointer-events-none"
+            draggable={false}
+          />
         </Link>
       </div>
       <nav className="flex-1 py-3 space-y-4">
@@ -109,15 +140,15 @@ export default function Sidebar({ role }: { role: Role }) {
                   <Link
                     key={it.href}
                     href={it.href}
-                    className={`flex items-center gap-3 px-5 py-2 text-[13px] transition border-l-2 ${
+                    className={`relative flex items-center gap-3 px-5 py-2 text-[13px] transition border-l-2 ${
                       active
-                        ? "text-white border-white bg-white/[0.04]"
-                        : "text-white/55 border-transparent hover:text-white hover:bg-white/[0.025]"
+                        ? "text-white border-brand2 bg-gradient-to-r from-brand/15 via-brand2/10 to-transparent shadow-[inset_0_0_24px_rgba(99,102,241,0.10)]"
+                        : "text-white/55 border-transparent hover:text-white hover:bg-white/[0.03]"
                     }`}
                   >
                     <span
                       className={`flex-shrink-0 transition ${
-                        active ? "text-white" : "text-white/40"
+                        active ? "text-brand2 drop-shadow-[0_0_6px_rgba(139,92,246,0.6)]" : "text-white/40"
                       }`}
                     >
                       {it.icon}

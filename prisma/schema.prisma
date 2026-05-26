@@ -51,6 +51,12 @@ enum TaskPriority {
   HIGH
 }
 
+enum TimeKind {
+  WORK
+  CLIENT_WAIT
+  REVISION
+}
+
 model User {
   id               String    @id @default(cuid())
   email            String    @unique
@@ -78,9 +84,12 @@ model Employee {
   sketchupLevel  SkillLevel @default(NONE)
   languages      String[]   @default([])
   active         Boolean    @default(true)
+  startedWorkAt  DateTime?  @db.Date  // actual employment start (KPI tenure source; falls back to createdAt)
   assignments    ProjectAssignment[]
   assignedTasks  Task[]              @relation("TaskAssignee")
   taskComments   TaskComment[]       @relation("TaskCommenter")
+  timeEntries    TimeEntry[]
+  kpiPeriods     EmployeeKpiPeriod[]
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 }
@@ -106,14 +115,46 @@ model Project {
   contractUrl   String?
   contractName  String?
   contractAt    DateTime?
+
+  // KPI integration
+  areaBandId         String?
+  areaBand           KpiAreaBand?    @relation("ProjectAreaBand", fields: [areaBandId], references: [id], onDelete: SetNull)
+  expectedHours      Int             @default(0)
+  gradeLevelId       String?
+  gradeLevel         KpiGradeLevel?  @relation("ProjectGrade", fields: [gradeLevelId], references: [id], onDelete: SetNull)
+  gradeScoredAt      DateTime?
+  gradeScores        ProjectGradeScore[]
+  actualGradeLevelId String?
+  actualGradeLevel   KpiGradeLevel?  @relation("ProjectActualGrade", fields: [actualGradeLevelId], references: [id], onDelete: SetNull)
+  qualityRating      Int?            // 1-5
+  clientSatisfaction Int?            // 1-5
+  closedAt           DateTime?
+
   phases        ProjectPhase[]
   assignments   ProjectAssignment[]
+  timeEntries   TimeEntry[]
+  kpiSnapshot   ProjectKpiSnapshot?
   createdBy     String
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
   @@index([type, status])
   @@index([code])
+  @@index([gradeLevelId])
+}
+
+model ProjectGradeScore {
+  id            String            @id @default(cuid())
+  projectId     String
+  project       Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  criterionId   String
+  criterion     KpiGradeCriterion @relation(fields: [criterionId], references: [id], onDelete: Restrict)
+  criterionLabel String           @default("")  // snapshot of criterion label at time of grading
+  score         Int               // 1-10
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([projectId, criterionId])
+  @@index([projectId])
 }
 
 model ProjectPhase {
@@ -122,15 +163,20 @@ model ProjectPhase {
   project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   ordinal        Int
   name           String
-  hours          Int
+  hours          Int       // current/working estimate
+  normHours      Int       @default(0)  // snapshot from KPI band (immutable reference)
+  kpiPhaseId     String?   // link to KPI phase template (if from KPI lookup)
+  kpiPhase       KpiPhase? @relation(fields: [kpiPhaseId], references: [id], onDelete: SetNull)
   progressPct    Int       @default(0)
   progressLocked Boolean   @default(false)
   startedAt      DateTime?
   completedAt    DateTime?
   tasks          Task[]
+  timeEntries    TimeEntry[]
 
   @@unique([projectId, ordinal])
   @@index([projectId])
+  @@index([kpiPhaseId])
 }
 
 model Task {
@@ -157,6 +203,7 @@ model Task {
   checklist   TaskChecklist[]
   attachments TaskAttachment[]
   comments    TaskComment[]
+  timeEntries TimeEntry[]
 
   @@index([phaseId, ordinal])
   @@index([assigneeId, status])
@@ -235,6 +282,85 @@ model KioskToken {
   @@index([revokedAt])
 }
 
+model ProjectKpiSnapshot {
+  id                String   @id @default(cuid())
+  projectId         String   @unique
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  normHours         Int      // expected from KPI band
+  workHours         Float    // WORK entries sum
+  clientWaitHours   Float    // CLIENT_WAIT entries sum
+  revisionHours     Float    // REVISION entries sum
+  totalActualHours  Float    // workHours + revisionHours
+  efficiency        Float    // norm / totalActual (>=1 = on/under budget)
+  onTime            Boolean  // closedAt <= endDate
+  expectedGradeKey  String?  // "APLUS"/"A"/"B"/"C"
+  actualGradeKey    String?  // matched / overridden by PM
+  qualityRating     Int?     // 1-5
+  clientSatisfaction Int?    // 1-5
+  closedAt          DateTime @default(now())
+  createdBy         String
+
+  @@index([closedAt])
+}
+
+model TimeEntry {
+  id         String        @id @default(cuid())
+  projectId  String
+  project    Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phaseId    String?
+  phase      ProjectPhase? @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+  taskId     String?
+  task       Task?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  employeeId String
+  employee   Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       DateTime      @db.Date
+  hours      Float
+  kind       TimeKind      @default(WORK)
+  note       String?
+  createdBy  String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([employeeId, date])
+  @@index([projectId, date])
+  @@index([phaseId])
+  @@index([taskId])
+}
+
+enum KpiPeriodType {
+  MONTH
+  QUARTER
+  YEAR
+}
+
+model EmployeeKpiPeriod {
+  id                String         @id @default(cuid())
+  employeeId        String
+  employee          Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  periodType        KpiPeriodType
+  periodKey         String         // "2026-05" / "2026-Q2" / "2026"
+  composite         Int            // 0..100
+  letter            String         // "A+"/"A"/"B"/"C"/"—"
+  closedCount       Int            @default(0)
+  activeCount       Int            @default(0)
+  efficiency        Float          @default(0)
+  onTime            Float          @default(0)
+  quality           Float          @default(0)
+  lowRevision       Float          @default(0)
+  gradeMatch        Float          @default(0)
+  normHours         Int            @default(0)
+  actualHours       Float          @default(0)
+  workHours         Float          @default(0)
+  clientWaitHours   Float          @default(0)
+  revisionHours     Float          @default(0)
+  computedAt        DateTime       @default(now())
+  computedBy        String
+
+  @@unique([employeeId, periodType, periodKey])
+  @@index([periodType, periodKey])
+  @@index([employeeId])
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   actorId   String?
@@ -245,4 +371,131 @@ model AuditLog {
 
   @@index([actorId])
   @@index([createdAt])
+}
+
+// ---------- KPI configuration (Time.xlsx + Технологийн карт.xlsx) ----------
+
+// Талбайн муж: 20-49, 50-99, ..., 2000+ (м²)
+model KpiAreaBand {
+  id            String          @id @default(cuid())
+  label         String          // "20-49", "50-99", ... "2000+"
+  minM2         Int             // inclusive
+  maxM2         Int?            // null = open-ended (2000+)
+  totalPriceMnt Decimal         @default(0) @db.Decimal(14, 2)
+  sortOrder     Int             @default(0)
+  phases        KpiBandPhase[]
+  projects      Project[]       @relation("ProjectAreaBand")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([label])
+  @@index([sortOrder])
+}
+
+// Үндсэн 10 фаз
+model KpiPhase {
+  id        String         @id @default(cuid())
+  key       String         @unique // "research", "space_planning", "moodboard", "sketch", "modeling", "rendering", "tech_drawings", "ppt", "client_response", "revision"
+  label     String         // "Ерөнхий судалгаа / Research"
+  isClientWait  Boolean    @default(false)
+  isRevision    Boolean    @default(false)
+  sortOrder Int            @default(0)
+  bands     KpiBandPhase[]
+  projectPhases ProjectPhase[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([sortOrder])
+}
+
+// Муж × фаз: цаг ба үнэлгээ
+model KpiBandPhase {
+  id              String      @id @default(cuid())
+  bandId          String
+  band            KpiAreaBand @relation(fields: [bandId], references: [id], onDelete: Cascade)
+  phaseId         String
+  phase           KpiPhase    @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  estimatedHours  Float       @default(0)
+  quantityNote    String?     // "2 хувилбар", "10-15 рендер"
+  unitRatePct     Float       @default(0) // 0.2 = 20%
+  unitRateMnt     Decimal     @default(0) @db.Decimal(14, 2)
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([bandId, phaseId])
+  @@index([bandId])
+  @@index([phaseId])
+}
+
+// Зургийн зэрэглэлийн түвшин (A+/A/B/C)
+model KpiGradeLevel {
+  id            String                    @id @default(cuid())
+  key           String                    @unique // "APLUS", "A", "B", "C"
+  label         String                    // "A+", "A", "B", "C"
+  minScore      Int                       // 9, 7, 4, 1
+  maxScore      Int                       // 10, 8, 6, 3
+  sortOrder     Int                       @default(0)
+  descriptions  KpiCriterionLevelDesc[]
+  experienceTiers KpiExperienceTierLevel[]
+  projectsExpected Project[]              @relation("ProjectGrade")
+  projectsActual   Project[]              @relation("ProjectActualGrade")
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  @@index([sortOrder])
+}
+
+// 7 шалгуур
+model KpiGradeCriterion {
+  id           String                  @id @default(cuid())
+  label        String                  // "Харилцагчийн (компанийн) хэмжээ, нэр хүнд"
+  description  String?                 // тайлбар
+  sortOrder    Int                     @default(0)
+  descriptions KpiCriterionLevelDesc[]
+  projectScores ProjectGradeScore[]
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  @@index([sortOrder])
+}
+
+// Шалгуур × түвшний тайлбар (7×4 матриц)
+model KpiCriterionLevelDesc {
+  id          String            @id @default(cuid())
+  criterionId String
+  criterion   KpiGradeCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  levelId     String
+  level       KpiGradeLevel     @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  body        String            // олон мөртэй тайлбар (newline-аар салгасан жагсаалт)
+  updatedAt   DateTime          @updatedAt
+
+  @@unique([criterionId, levelId])
+  @@index([criterionId])
+  @@index([levelId])
+}
+
+// Дизайнерийн туршлагын муж
+model KpiExperienceTier {
+  id          String                  @id @default(cuid())
+  label       String                  // "1-2 жил"
+  minYears    Int                     // 1
+  maxYears    Int?                    // 2, null = open
+  sortOrder   Int                     @default(0)
+  allowedLevels KpiExperienceTierLevel[]
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  @@unique([label])
+  @@index([sortOrder])
+}
+
+model KpiExperienceTierLevel {
+  id       String            @id @default(cuid())
+  tierId   String
+  tier     KpiExperienceTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  levelId  String
+  level    KpiGradeLevel     @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+  @@unique([tierId, levelId])
+  @@index([tierId])
+  @@index([levelId])
 }

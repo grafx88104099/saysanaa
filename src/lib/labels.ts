@@ -86,11 +86,11 @@ export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
 export const TASK_STATUSES: TaskStatus[] = ["TODO", "DOING", "REVIEW", "DONE", "BLOCKED"];
 
 export const TASK_STATUS_COLOR: Record<TaskStatus, string> = {
-  TODO: "#8B919C",
-  DOING: "#8B95FF",
-  REVIEW: "#E5B85C",
-  DONE: "#3FCF8E",
-  BLOCKED: "#E07474",
+  TODO: "#9CA3B8",
+  DOING: "#818CF8",
+  REVIEW: "#FBBF24",
+  DONE: "#34D399",
+  BLOCKED: "#F87171",
 };
 
 export const TASK_PRIORITY_LABEL: Record<TaskPriority, string> = {
@@ -102,9 +102,9 @@ export const TASK_PRIORITY_LABEL: Record<TaskPriority, string> = {
 export const TASK_PRIORITIES: TaskPriority[] = ["LOW", "NORMAL", "HIGH"];
 
 export function priorityAccent(priority: number): { color: string; tone: string } {
-  if (priority >= 9) return { color: "#E07474", tone: "Маш яаралтай" };
-  if (priority >= 7) return { color: "#E5B85C", tone: "Яаралтай" };
-  if (priority >= 4) return { color: "#8B95FF", tone: "Дунд зэрэг чухал" };
-  return { color: "#8B919C", tone: "Хэвийн" };
+  if (priority >= 9) return { color: "#F87171", tone: "Маш яаралтай" };
+  if (priority >= 7) return { color: "#FBBF24", tone: "Яаралтай" };
+  if (priority >= 4) return { color: "#818CF8", tone: "Дунд зэрэг чухал" };
+  return { color: "#9CA3B8", tone: "Хэвийн" };
 }
 

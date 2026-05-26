@@ -26,6 +26,13 @@ const employeeSchema = z.object({
   autocadLevel: z.nativeEnum(SkillLevel),
   sketchupLevel: z.nativeEnum(SkillLevel),
   languages: z.array(z.string()).default([]),
+  startedWorkAt: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || /^\d{4}-\d{2}-\d{2}$/.test(v), {
+      message: "Огноо буруу формат",
+    }),
 });
 
 function parseForm(formData: FormData) {
@@ -41,6 +48,7 @@ function parseForm(formData: FormData) {
     autocadLevel: formData.get("autocadLevel") as SkillLevel,
     sketchupLevel: formData.get("sketchupLevel") as SkillLevel,
     languages: formData.getAll("languages").map(String),
+    startedWorkAt: String(formData.get("startedWorkAt") || "").trim(),
   });
 }
 
@@ -88,6 +96,7 @@ export async function createEmployeeAction(_prev: FormState, formData: FormData)
           autocadLevel: data.autocadLevel,
           sketchupLevel: data.sketchupLevel,
           languages: data.languages,
+          startedWorkAt: data.startedWorkAt ? new Date(data.startedWorkAt) : null,
         },
       },
     },
@@ -137,6 +146,7 @@ export async function updateEmployeeAction(
         autocadLevel: data.autocadLevel,
         sketchupLevel: data.sketchupLevel,
         languages: data.languages,
+        startedWorkAt: data.startedWorkAt ? new Date(data.startedWorkAt) : null,
       },
     }),
   ]);

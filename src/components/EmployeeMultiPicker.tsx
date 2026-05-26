@@ -8,6 +8,7 @@ export type EmpOption = {
   role: string;
   profession: string | null;
   photoUrl: string | null;
+  yearsOfService?: number;
 };
 
 const ROLE_INITIAL: Record<string, string> = {
@@ -33,6 +34,7 @@ export default function EmployeeMultiPicker({
   defaultIds = [],
   defaultLeadId = null,
   max = 5,
+  onChange,
 }: {
   name: string;
   leadName: string;
@@ -40,19 +42,25 @@ export default function EmployeeMultiPicker({
   defaultIds?: string[];
   defaultLeadId?: string | null;
   max?: number;
+  onChange?: (ids: string[]) => void;
 }) {
   const [picked, setPicked] = useState<string[]>(defaultIds);
   const [lead, setLead] = useState<string | null>(defaultLeadId);
 
+  function applyPicked(next: string[]) {
+    setPicked(next);
+    onChange?.(next);
+  }
+
   function toggle(id: string) {
     if (picked.includes(id)) {
       const next = picked.filter((x) => x !== id);
-      setPicked(next);
+      applyPicked(next);
       if (lead === id) setLead(next[0] ?? null);
     } else {
       if (picked.length >= max) return;
       const next = [...picked, id];
-      setPicked(next);
+      applyPicked(next);
       if (!lead) setLead(id);
     }
   }

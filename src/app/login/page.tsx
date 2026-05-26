@@ -9,8 +9,9 @@ function SubmitBtn({ disabled }: { disabled: boolean }) {
     <button
       type="submit"
       disabled={disabled || pending}
-      className="w-full mt-2 h-11 rounded-md bg-white text-black text-[13px] font-semibold transition
-                 hover:bg-white/90 disabled:bg-white/10 disabled:text-white/30 disabled:cursor-not-allowed"
+      className="w-full mt-2 h-11 rounded-md text-white text-[13px] font-semibold transition
+                 bg-brand hover:bg-brand/90 active:scale-[0.98]
+                 disabled:bg-white/10 disabled:text-white/30 disabled:cursor-not-allowed"
     >
       {pending ? "Шалгаж байна…" : "Нэвтрэх"}
     </button>
@@ -25,9 +26,18 @@ export default function LoginPage() {
   const canSubmit = email.trim().length > 0 && password.length > 0;
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 bg-black text-white">
-      <div className="w-full max-w-[340px]">
-        <h1 className="text-[15px] font-medium text-center mb-8 tracking-tight">Нэвтрэх</h1>
+    <main className="min-h-screen flex items-center justify-center px-4 text-white">
+      <div className="w-full max-w-[360px] panel p-8 shadow-[0_0_60px_rgba(106,166,255,0.22)]">
+        <div className="flex justify-center mb-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.jpg"
+            alt="SAYSANAA"
+            className="logo-invert h-10 w-auto select-none pointer-events-none"
+            draggable={false}
+          />
+        </div>
+        <p className="text-[12px] text-center text-sub mb-6 uppercase tracking-[0.18em]">Нэвтрэх</p>
 
         <form action={action} className="space-y-3">
           <input
@@ -38,8 +48,9 @@ export default function LoginPage() {
             placeholder="И-мэйл"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-11 bg-transparent border border-white/15 rounded-md px-3 text-[13px]
-                       placeholder:text-white/40 focus:outline-none focus:border-white/50 transition"
+            className="w-full h-11 bg-white/[0.02] border border-white/12 rounded-md px-3 text-[13px]
+                       placeholder:text-white/40 focus:outline-none focus:border-brand
+                       focus:shadow-[0_0_0_3px_rgba(106,166,255,0.18)] focus:bg-white/[0.04] transition"
           />
           <div className="relative">
             <input
@@ -50,8 +61,9 @@ export default function LoginPage() {
               placeholder="Нууц үг"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-11 bg-transparent border border-white/15 rounded-md pl-3 pr-11 text-[13px]
-                         placeholder:text-white/40 focus:outline-none focus:border-white/50 transition"
+              className="w-full h-11 bg-white/[0.02] border border-white/12 rounded-md pl-3 pr-11 text-[13px]
+                         placeholder:text-white/40 focus:outline-none focus:border-brand
+                         focus:shadow-[0_0_0_3px_rgba(106,166,255,0.18)] focus:bg-white/[0.04] transition"
             />
             <button
               type="button"
@@ -78,7 +90,7 @@ export default function LoginPage() {
           </div>
 
           {state?.error && (
-            <div className="text-[12px] text-white/70 border border-white/20 rounded-md px-3 py-2">
+            <div className="text-[12px] text-danger border border-danger/40 bg-danger/10 rounded-md px-3 py-2">
               {state.error}
             </div>
           )}

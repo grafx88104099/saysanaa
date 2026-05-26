@@ -40,18 +40,68 @@ export type ProjectFormState =
   | undefined;
 
 function readPhases(formData: FormData) {
-  // formData has phaseHours[0..N] strings
-  const result: { ordinal: number; hours: number }[] = [];
+  // formData has phaseHours[0..N] / phaseNormHours[ord] / phaseKpiId[ord] / phaseName[ord]
+  const byOrd = new Map<
+    number,
+    { hours?: number; normHours?: number; kpiPhaseId?: string; name?: string }
+  >();
+  const ensure = (ord: number) => {
+    if (!byOrd.has(ord)) byOrd.set(ord, {});
+    return byOrd.get(ord)!;
+  };
+  const clampHrs = (n: number) =>
+    Math.max(0, Math.min(MAX_PHASE_HOURS, Math.round(n)));
   formData.forEach((v, k) => {
-    const m = k.match(/^phaseHours\[(\d+)\]$/);
+    let m = k.match(/^phaseHours\[(\d+)\]$/);
     if (m) {
       const ord = parseInt(m[1], 10);
-      const raw = parseInt(String(v), 10) || 0;
-      const h = Math.max(0, Math.min(MAX_PHASE_HOURS, raw));
-      result.push({ ordinal: ord, hours: h });
+      ensure(ord).hours = clampHrs(parseFloat(String(v)) || 0);
+      return;
+    }
+    m = k.match(/^phaseNormHours\[(\d+)\]$/);
+    if (m) {
+      ensure(parseInt(m[1], 10)).normHours = clampHrs(parseFloat(String(v)) || 0);
+      return;
+    }
+    m = k.match(/^phaseKpiId\[(\d+)\]$/);
+    if (m) {
+      ensure(parseInt(m[1], 10)).kpiPhaseId = String(v) || undefined;
+      return;
+    }
+    m = k.match(/^phaseName\[(\d+)\]$/);
+    if (m) {
+      ensure(parseInt(m[1], 10)).name = String(v) || undefined;
     }
   });
+  const result: {
+    ordinal: number;
+    hours: number;
+    normHours: number;
+    kpiPhaseId: string | null;
+    name: string | null;
+  }[] = [];
+  for (const [ord, x] of byOrd.entries()) {
+    result.push({
+      ordinal: ord,
+      hours: x.hours ?? 0,
+      normHours: x.normHours ?? 0,
+      kpiPhaseId: x.kpiPhaseId ?? null,
+      name: x.name ?? null,
+    });
+  }
   return result.sort((a, b) => a.ordinal - b.ordinal);
+}
+
+function readGradeScores(formData: FormData) {
+  const scores: { criterionId: string; score: number }[] = [];
+  formData.forEach((v, k) => {
+    const m = k.match(/^gradeScore\[([^\]]+)\]$/);
+    if (m) {
+      const s = parseInt(String(v), 10) || 0;
+      if (s > 0) scores.push({ criterionId: m[1], score: Math.max(1, Math.min(10, s)) });
+    }
+  });
+  return scores;
 }
 
 function readAssignments(formData: FormData) {
@@ -88,23 +138,66 @@ export async function createProjectAction(
 
   const phaseInput = readPhases(formData);
   const template = getPhaseTemplate(d.type);
-  if (phaseInput.length !== template.length) {
+  const isDesign = d.type === "DESIGN";
+
+  // For DESIGN: if KPI phases were used (kpiPhaseId present), trust the form's phase list.
+  // For BUILD or DESIGN without KPI: use the static template as the source of truth.
+  const usingKpi = isDesign && phaseInput.some((p) => p.kpiPhaseId);
+  const phases = usingKpi
+    ? phaseInput.map((p) => ({
+        ordinal: p.ordinal,
+        name: p.name || `Фаз ${p.ordinal + 1}`,
+        hours: p.hours,
+        normHours: p.normHours,
+        kpiPhaseId: p.kpiPhaseId,
+      }))
+    : template.map((t) => {
+        const ph = phaseInput.find((p) => p.ordinal === t.ordinal);
+        return {
+          ordinal: t.ordinal,
+          name: t.name,
+          hours: ph?.hours ?? t.hours,
+          normHours: 0,
+          kpiPhaseId: null as string | null,
+        };
+      });
+
+  if (!usingKpi && phaseInput.length !== template.length) {
     return { error: "Фазын мэдээлэл бүрэн биш байна" };
   }
-  const phases = template.map((t) => {
-    const ph = phaseInput.find((p) => p.ordinal === t.ordinal);
-    return { ordinal: t.ordinal, name: t.name, hours: ph?.hours ?? t.hours };
-  });
   const totalHours = phases.reduce((s, p) => s + p.hours, 0);
+  const expectedHours = phases.reduce((s, p) => s + (p.normHours || 0), 0);
 
   const { ids: assigneeIds, lead } = readAssignments(formData);
   if (assigneeIds.length === 0) return { error: "Дор хаяж 1 хариуцагч сонгоно уу" };
+
+  // KPI grading
+  const areaBandId = String(formData.get("areaBandId") || "").trim() || null;
+  const gradeLevelId = String(formData.get("gradeLevelId") || "").trim() || null;
+  const gradeScores = readGradeScores(formData);
 
   const holidayKeys = await loadHolidayKeys();
   const startDate = new Date(d.startDate);
   const endDate = d.endDate
     ? new Date(d.endDate)
     : calcEndDate(startDate, totalHours, holidayKeys);
+
+  // Snapshot criterion labels for grading history (defends against criterion rename/delete)
+  let gradeScoreData: { criterionId: string; criterionLabel: string; score: number }[] = [];
+  if (isDesign && gradeScores.length > 0) {
+    const criteria = await prisma.kpiGradeCriterion.findMany({
+      where: { id: { in: gradeScores.map((g) => g.criterionId) } },
+      select: { id: true, label: true },
+    });
+    const labelMap = new Map(criteria.map((c) => [c.id, c.label]));
+    gradeScoreData = gradeScores
+      .filter((g) => labelMap.has(g.criterionId))
+      .map((g) => ({
+        criterionId: g.criterionId,
+        criterionLabel: labelMap.get(g.criterionId) ?? "",
+        score: g.score,
+      }));
+  }
 
   const project = await createProjectWithUniqueCode(d.type, d.code, (code) =>
     prisma.project.create({
@@ -124,6 +217,10 @@ export async function createProjectAction(
         totalWorkDays: Math.ceil(totalHours / 8),
         notes: d.notes || null,
         createdBy: me.uid,
+        areaBandId: isDesign ? areaBandId : null,
+        gradeLevelId: isDesign ? gradeLevelId : null,
+        gradeScoredAt: isDesign && gradeLevelId ? new Date() : null,
+        expectedHours,
         phases: { create: phases },
         assignments: {
           create: assigneeIds.map((id) => ({
@@ -131,10 +228,18 @@ export async function createProjectAction(
             isLead: id === lead,
           })),
         },
+        ...(gradeScoreData.length > 0
+          ? { gradeScores: { create: gradeScoreData } }
+          : {}),
       },
     }),
   );
-  await audit("project.create", me.uid, project.id, { code: project.code, type: project.type });
+  await audit("project.create", me.uid, project.id, {
+    code: project.code,
+    type: project.type,
+    grade: gradeLevelId,
+    band: areaBandId,
+  });
   revalidatePath("/admin/projects");
   redirect(`/admin/projects/${project.id}`);
 }
@@ -177,11 +282,35 @@ export async function updateProjectAction(
 
   const phaseInput = readPhases(formData);
   const template = getPhaseTemplate(d.type);
-  const phases = template.map((t) => {
-    const ph = phaseInput.find((p) => p.ordinal === t.ordinal);
-    return { ordinal: t.ordinal, name: t.name, hours: ph?.hours ?? t.hours };
-  });
+  const isDesign = d.type === "DESIGN";
+  const usingKpi = isDesign && phaseInput.some((p) => p.kpiPhaseId);
+
+  const phases = usingKpi
+    ? phaseInput.map((p) => ({
+        ordinal: p.ordinal,
+        name: p.name || `Фаз ${p.ordinal + 1}`,
+        hours: p.hours,
+        normHours: p.normHours,
+        kpiPhaseId: p.kpiPhaseId,
+      }))
+    : template.map((t) => {
+        const ph = phaseInput.find((p) => p.ordinal === t.ordinal);
+        return {
+          ordinal: t.ordinal,
+          name: t.name,
+          hours: ph?.hours ?? t.hours,
+          normHours: 0,
+          kpiPhaseId: null as string | null,
+        };
+      });
+
+  const expectedHours = phases.reduce((s, p) => s + (p.normHours || 0), 0);
   const { ids: assigneeIds, lead } = readAssignments(formData);
+
+  // KPI grading on edit (DESIGN only)
+  const areaBandId = String(formData.get("areaBandId") || "").trim() || null;
+  const gradeLevelId = String(formData.get("gradeLevelId") || "").trim() || null;
+  const gradeScores = readGradeScores(formData);
 
   await prisma.$transaction(async (tx) => {
     await tx.project.update({
@@ -199,6 +328,11 @@ export async function updateProjectAction(
         startDate: new Date(d.startDate),
         endDate: d.endDate ? new Date(d.endDate) : null,
         notes: d.notes || null,
+        // KPI metadata (DESIGN only — BUILD always clears)
+        areaBandId: isDesign ? areaBandId : null,
+        expectedHours: isDesign ? expectedHours : 0,
+        gradeLevelId: isDesign ? gradeLevelId : null,
+        gradeScoredAt: isDesign && gradeLevelId ? new Date() : null,
       },
     });
     // upsert phases by ordinal, keep progressPct
@@ -207,11 +341,23 @@ export async function updateProjectAction(
       if (found) {
         await tx.projectPhase.update({
           where: { id: found.id },
-          data: { name: p.name, hours: p.hours },
+          data: {
+            name: p.name,
+            hours: p.hours,
+            normHours: p.normHours,
+            kpiPhaseId: p.kpiPhaseId,
+          },
         });
       } else {
         await tx.projectPhase.create({
-          data: { projectId: id, ordinal: p.ordinal, name: p.name, hours: p.hours },
+          data: {
+            projectId: id,
+            ordinal: p.ordinal,
+            name: p.name,
+            hours: p.hours,
+            normHours: p.normHours,
+            kpiPhaseId: p.kpiPhaseId,
+          },
         });
       }
     }
@@ -220,6 +366,29 @@ export async function updateProjectAction(
     await tx.projectPhase.deleteMany({
       where: { projectId: id, ordinal: { notIn: keepOrds } },
     });
+
+    // sync grade scores (DESIGN only)
+    if (isDesign) {
+      await tx.projectGradeScore.deleteMany({ where: { projectId: id } });
+      if (gradeScores.length > 0) {
+        // Fetch criterion labels to snapshot them
+        const criteria = await tx.kpiGradeCriterion.findMany({
+          where: { id: { in: gradeScores.map((g) => g.criterionId) } },
+          select: { id: true, label: true },
+        });
+        const labelMap = new Map(criteria.map((c) => [c.id, c.label]));
+        await tx.projectGradeScore.createMany({
+          data: gradeScores
+            .filter((g) => labelMap.has(g.criterionId))
+            .map((g) => ({
+              projectId: id,
+              criterionId: g.criterionId,
+              criterionLabel: labelMap.get(g.criterionId) ?? "",
+              score: g.score,
+            })),
+        });
+      }
+    }
 
     // sync assignments
     await tx.projectAssignment.deleteMany({ where: { projectId: id } });
@@ -235,7 +404,10 @@ export async function updateProjectAction(
   });
 
   await recalcProjectStats(id);
-  await audit("project.update", me.uid, id);
+  await audit("project.update", me.uid, id, {
+    grade: gradeLevelId,
+    band: areaBandId,
+  });
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${id}`);
   redirect(`/admin/projects/${id}`);
@@ -247,6 +419,156 @@ export async function changeStatusAction(id: string, status: ProjectStatus) {
   await audit("project.status_change", me.uid, id, { status });
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${id}`);
+}
+
+const closeSchema = z.object({
+  qualityRating: z.number().int().min(1).max(5),
+  clientSatisfaction: z.number().int().min(1).max(5).nullable(),
+  actualGradeLevelId: z.string().nullable(),
+  closingNote: z.string().max(500).nullable(),
+});
+
+export type CloseState = { ok?: boolean; error?: string } | undefined;
+
+export async function closeProjectAction(
+  projectId: string,
+  _prev: CloseState,
+  formData: FormData
+): Promise<CloseState> {
+  const me = await requireRole("ADMIN", "PM");
+  const parsed = closeSchema.safeParse({
+    qualityRating: parseInt(String(formData.get("qualityRating") || "0")) || 0,
+    clientSatisfaction: formData.get("clientSatisfaction")
+      ? parseInt(String(formData.get("clientSatisfaction")))
+      : null,
+    actualGradeLevelId: (String(formData.get("actualGradeLevelId") || "").trim() || null) as
+      | string
+      | null,
+    closingNote: (String(formData.get("closingNote") || "").trim() || null) as string | null,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const d = parsed.data;
+
+  // Resolve actualGrade (validation outside transaction for fast error return)
+  let actualGrade = null as { id: string; key: string; label: string } | null;
+  let preloadedGradeLevel: { id: string; key: string; label: string } | null = null;
+  if (d.actualGradeLevelId) {
+    const lv = await prisma.kpiGradeLevel.findUnique({ where: { id: d.actualGradeLevelId } });
+    if (!lv) return { error: "Зэрэглэл буруу" };
+    actualGrade = { id: lv.id, key: lv.key, label: lv.label };
+  }
+
+  const now = new Date();
+  let raceWinResult: { workHours: number; clientWaitHours: number; revisionHours: number; efficiency: number; onTime: boolean } | null = null;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Re-read inside transaction to defeat TOCTOU race
+      const project = await tx.project.findUnique({
+        where: { id: projectId },
+        include: {
+          gradeLevel: true,
+          timeEntries: { select: { hours: true, kind: true } },
+          kpiSnapshot: true,
+        },
+      });
+      if (!project) throw new Error("NOT_FOUND");
+      if (project.status === "COMPLETED" || project.status === "CANCELLED") {
+        throw new Error("ALREADY_CLOSED");
+      }
+
+      // Fallback: if PM didn't override actualGrade, use the existing expected gradeLevel
+      if (!actualGrade && project.gradeLevel) {
+        actualGrade = {
+          id: project.gradeLevel.id,
+          key: project.gradeLevel.key,
+          label: project.gradeLevel.label,
+        };
+      }
+      preloadedGradeLevel = project.gradeLevel;
+
+      // Aggregate time entries
+      let workHours = 0;
+      let clientWaitHours = 0;
+      let revisionHours = 0;
+      for (const te of project.timeEntries) {
+        if (te.kind === "WORK") workHours += te.hours;
+        else if (te.kind === "CLIENT_WAIT") clientWaitHours += te.hours;
+        else revisionHours += te.hours;
+      }
+      const totalActualHours = workHours + revisionHours;
+      const normHours = project.expectedHours || project.totalHours;
+      const efficiency = totalActualHours > 0 ? normHours / totalActualHours : 0;
+      // onTime: compare against end-of-day on endDate so closing on deadline day counts as on-time
+      let onTime = true;
+      if (project.endDate) {
+        const endOfDay = new Date(project.endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        onTime = now <= endOfDay;
+      }
+      raceWinResult = { workHours, clientWaitHours, revisionHours, efficiency, onTime };
+
+      await tx.project.update({
+        where: { id: projectId },
+        data: {
+          status: "COMPLETED",
+          closedAt: now,
+          qualityRating: d.qualityRating,
+          clientSatisfaction: d.clientSatisfaction,
+          actualGradeLevelId: actualGrade?.id ?? null,
+          notes: d.closingNote
+            ? `${project.notes ? project.notes + "\n\n" : ""}— Хаалт (${now.toISOString().slice(0, 10)}): ${d.closingNote}`
+            : project.notes,
+        },
+      });
+
+      const snapshotData = {
+        normHours,
+        workHours,
+        clientWaitHours,
+        revisionHours,
+        totalActualHours,
+        efficiency,
+        onTime,
+        expectedGradeKey: project.gradeLevel?.key ?? null,
+        actualGradeKey: actualGrade?.key ?? null,
+        qualityRating: d.qualityRating,
+        clientSatisfaction: d.clientSatisfaction,
+        closedAt: now,
+        createdBy: me.uid,
+      };
+      if (project.kpiSnapshot) {
+        await tx.projectKpiSnapshot.update({
+          where: { projectId },
+          data: snapshotData,
+        });
+      } else {
+        await tx.projectKpiSnapshot.create({
+          data: { projectId, ...snapshotData },
+        });
+      }
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
+    if (msg === "ALREADY_CLOSED") return { error: "Төсөл аль хэдийн хаагдсан" };
+    if (msg === "NOT_FOUND") return { error: "Олдсонгүй" };
+    throw e;
+  }
+
+  // Silence unused-var linter — preloadedGradeLevel is captured during tx but not needed after
+  void preloadedGradeLevel;
+
+  await audit("project.close", me.uid, projectId, {
+    qualityRating: d.qualityRating,
+    clientSatisfaction: d.clientSatisfaction,
+    actualGrade: actualGrade?.key,
+    efficiency: raceWinResult?.efficiency.toFixed(2),
+    onTime: raceWinResult?.onTime,
+  });
+  revalidatePath("/admin/projects");
+  revalidatePath(`/admin/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}`);
+  return { ok: true };
 }
 
 export async function updatePhaseProgressAction(phaseId: string, progressPct: number) {

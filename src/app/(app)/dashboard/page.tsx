@@ -40,15 +40,15 @@ export default async function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto py-8 px-2">
       <div className="mb-10">
-        <h1 className="text-[28px] font-semibold tracking-tight">Хяналтын самбар</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight text-gradient">Хяналтын самбар</h1>
         <p className="text-white/45 text-[13px] mt-1">Системийн ерөнхий байдал</p>
       </div>
 
-      <div className="grid grid-cols-4 gap-px bg-white/8 border border-white/10 rounded-lg overflow-hidden mb-10">
-        <Stat label="Идэвхтэй төсөл" value={activeProjects} accent="#8B95FF" />
-        <Stat label="Миний төсөл" value={myActiveProjects} accent="#3FCF8E" />
-        <Stat label="Идэвхтэй ажилтан" value={active} accent="#E5B85C" />
-        <Stat label="Нийт ажилтан" value={employees} accent="#EBEDF0" />
+      <div className="grid grid-cols-4 gap-3 mb-10">
+        <Stat label="Идэвхтэй төсөл" value={activeProjects} accent="#6AA6FF" />
+        <Stat label="Миний төсөл" value={myActiveProjects} accent="#22C55E" />
+        <Stat label="Идэвхтэй ажилтан" value={active} accent="#F59E0B" />
+        <Stat label="Нийт ажилтан" value={employees} accent="#8B5CF6" />
       </div>
 
       <div className="grid grid-cols-3 gap-6">
@@ -99,10 +99,10 @@ export default async function Dashboard() {
                       showLabel
                       color={
                         p.progressPct >= 100
-                          ? "#3FCF8E"
+                          ? "#34D399"
                           : p.progressPct >= 50
-                          ? "#8B95FF"
-                          : "#E5B85C"
+                          ? "#818CF8"
+                          : "#FBBF24"
                       }
                     />
                   </Link>
@@ -136,14 +136,23 @@ function Stat({
   accent: string;
 }) {
   return (
-    <div className="bg-black px-6 py-7">
-      <div className="text-[11px] font-medium text-white/45 mb-3">{label}</div>
+    <div
+      className="relative panel px-5 py-5 overflow-hidden"
+      style={{
+        background: `radial-gradient(140% 110% at 0% 0%, ${accent}1F 0%, transparent 55%), linear-gradient(180deg, #121A33 0%, #18224A 100%)`,
+      }}
+    >
+      <div className="text-[11px] font-medium text-sub mb-2 uppercase tracking-wider">{label}</div>
       <div
-        className="text-[34px] font-semibold tracking-tight leading-none tabular-nums"
-        style={{ color: accent }}
+        className="text-[30px] font-bold tracking-tight leading-none tabular-nums"
+        style={{ color: accent, textShadow: `0 0 22px ${accent}55` }}
       >
         {value}
       </div>
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px opacity-80"
+        style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }}
+      />
     </div>
   );
 }

@@ -47,6 +47,9 @@ export default async function EditEmployeePage({ params }: { params: Promise<{ i
           autocadLevel: emp.autocadLevel,
           sketchupLevel: emp.sketchupLevel,
           languages: emp.languages,
+          startedWorkAt: emp.startedWorkAt
+            ? emp.startedWorkAt.toISOString().slice(0, 10)
+            : null,
         }}
       />
     </div>

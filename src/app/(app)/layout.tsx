@@ -16,6 +16,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user.twoFactorEnabled) redirect("/2fa/setup");
 
   const me = {
+    uid: s.uid,
+    employeeId: user.employee.id,
     email: user.email,
     role: user.employee.role,
     fullName: `${user.employee.lastName} ${user.employee.firstName}`.trim(),

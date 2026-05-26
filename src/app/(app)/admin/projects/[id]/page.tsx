@@ -12,6 +12,7 @@ import ProgressRing from "@/components/ProgressRing";
 import PhasesBoard from "@/components/projects/PhasesBoard";
 import ContractCard from "@/components/projects/ContractCard";
 import StatusMenu from "./StatusMenu";
+import CloseModal from "./CloseModal";
 import { fmtDate, fmtMoney } from "@/lib/format";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -40,6 +41,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         },
       },
       assignments: { include: { employee: true } },
+      areaBand: true,
+      gradeLevel: true,
+      gradeScores: { include: { criterion: true } },
+      timeEntries: { select: { hours: true, kind: true, phaseId: true } },
+      kpiSnapshot: true,
+      actualGradeLevel: true,
     },
   });
   if (!p) notFound();
@@ -57,8 +64,38 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       photoUrl: true,
     },
   });
+  const allLevels = await prisma.kpiGradeLevel.findMany({
+    orderBy: { sortOrder: "asc" },
+    select: { id: true, key: true, label: true },
+  });
 
   const canEdit = me.role === "ADMIN" || me.role === "PM";
+
+  // Aggregate time entries by phase + kind
+  const phaseHoursMap = new Map<
+    string | null,
+    { work: number; clientWait: number; revision: number }
+  >();
+  let totalWork = 0;
+  let totalClientWait = 0;
+  let totalRevision = 0;
+  for (const te of p.timeEntries) {
+    const key = te.phaseId;
+    if (!phaseHoursMap.has(key))
+      phaseHoursMap.set(key, { work: 0, clientWait: 0, revision: 0 });
+    const slot = phaseHoursMap.get(key)!;
+    if (te.kind === "WORK") {
+      slot.work += te.hours;
+      totalWork += te.hours;
+    } else if (te.kind === "CLIENT_WAIT") {
+      slot.clientWait += te.hours;
+      totalClientWait += te.hours;
+    } else {
+      slot.revision += te.hours;
+      totalRevision += te.hours;
+    }
+  }
+  const actualHours = totalWork + totalRevision; // CLIENT_WAIT хасагдана
   const acc = priorityAccent(p.priority);
   const cv = p.contractValue ? Number(p.contractValue) : null;
   const today = new Date();
@@ -133,6 +170,38 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <Stat label="Багийнхан" value={`${p.assignments.length} хүн`} />
       </div>
 
+      {p.type === "DESIGN" && (p.gradeLevel || p.areaBand || p.expectedHours > 0 || p.kpiSnapshot) && (
+        <KpiSummary
+          gradeLevel={p.gradeLevel}
+          areaBand={p.areaBand}
+          expectedHours={p.expectedHours}
+          actualHours={actualHours}
+          workHours={totalWork}
+          clientWaitHours={totalClientWait}
+          revisionHours={totalRevision}
+          snapshot={
+            p.kpiSnapshot
+              ? {
+                  efficiency: p.kpiSnapshot.efficiency,
+                  qualityRating: p.kpiSnapshot.qualityRating,
+                  clientSatisfaction: p.kpiSnapshot.clientSatisfaction,
+                  onTime: p.kpiSnapshot.onTime,
+                  expectedGradeKey: p.kpiSnapshot.expectedGradeKey,
+                  actualGradeKey: p.kpiSnapshot.actualGradeKey,
+                  actualGradeLabel: p.actualGradeLevel?.label ?? null,
+                  closedAt: p.kpiSnapshot.closedAt.toISOString(),
+                }
+              : null
+          }
+          scores={p.gradeScores
+            .sort((a, b) => a.criterion.sortOrder - b.criterion.sortOrder)
+            .map((s) => ({
+              label: s.criterion.label,
+              score: s.score,
+            }))}
+        />
+      )}
+
       <div className="mb-6">
         <ContractCard
           projectId={p.id}
@@ -150,8 +219,20 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       </div>
 
       {canEdit && (
-        <div className="mb-6">
+        <div className="mb-6 flex items-center gap-3 flex-wrap">
           <StatusMenu projectId={p.id} status={p.status} />
+          {p.status !== "COMPLETED" && p.status !== "CANCELLED" && (
+            <CloseModal
+              projectId={p.id}
+              expectedGradeLevel={p.gradeLevel}
+              allLevels={allLevels}
+              estimatedEfficiency={
+                p.expectedHours > 0 && actualHours > 0
+                  ? p.expectedHours / actualHours
+                  : null
+              }
+            />
+          )}
         </div>
       )}
 
@@ -304,6 +385,252 @@ function Stat({
       >
         {value}
       </div>
+    </div>
+  );
+}
+
+function KpiSummary({
+  gradeLevel,
+  areaBand,
+  expectedHours,
+  actualHours,
+  workHours,
+  clientWaitHours,
+  revisionHours,
+  scores,
+  snapshot,
+}: {
+  gradeLevel: { id: string; key: string; label: string } | null;
+  areaBand: { id: string; label: string; totalPriceMnt: unknown } | null;
+  expectedHours: number;
+  actualHours: number;
+  workHours: number;
+  clientWaitHours: number;
+  revisionHours: number;
+  scores: { label: string; score: number }[];
+  snapshot: {
+    efficiency: number;
+    qualityRating: number | null;
+    clientSatisfaction: number | null;
+    onTime: boolean;
+    expectedGradeKey: string | null;
+    actualGradeKey: string | null;
+    actualGradeLabel: string | null;
+    closedAt: string;
+  } | null;
+}) {
+  // Efficiency convention (matches server-side snapshot): normHours / actualHours.
+  // efficiency >= 1 → on/under budget (good). When snapshot exists, prefer the persisted value.
+  const efficiency =
+    snapshot?.efficiency ??
+    (expectedHours > 0 && actualHours > 0 ? expectedHours / actualHours : 0);
+  const efficiencyPct = efficiency > 0 ? Math.round(efficiency * 100) : 0;
+  const onBudget = efficiency >= 1.0;
+
+  const gradeBg =
+    gradeLevel?.key === "APLUS"
+      ? "linear-gradient(135deg,#6AA6FF,#8B5CF6)"
+      : gradeLevel?.key === "A"
+      ? "#6AA6FF"
+      : gradeLevel?.key === "B"
+      ? "#F59E0B"
+      : gradeLevel?.key === "C"
+      ? "#6B7390"
+      : "transparent";
+
+  return (
+    <div className="mb-6 panel p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-[11px] uppercase tracking-[0.15em] text-sub font-medium">
+          KPI үнэлгээ {snapshot && <span className="text-tx ml-2">· Хаалт хийгдсэн</span>}
+        </div>
+        <div className="flex items-center gap-2">
+          {gradeLevel && (
+            <div className="text-[11px] text-sub">Хүлээгдсэн:</div>
+          )}
+          {gradeLevel && (
+            <div
+              className="text-[14px] font-bold px-2.5 py-0.5 rounded text-white"
+              style={{ background: gradeBg }}
+            >
+              {gradeLevel.label}
+            </div>
+          )}
+          {snapshot?.actualGradeLabel && (
+            <>
+              <span className="text-sub text-[12px]">→</span>
+              <div className="text-[11px] text-sub">Бодит:</div>
+              <div
+                className="text-[14px] font-bold px-2.5 py-0.5 rounded text-white"
+                style={{
+                  background:
+                    snapshot.actualGradeKey === "APLUS"
+                      ? "linear-gradient(135deg,#6AA6FF,#8B5CF6)"
+                      : snapshot.actualGradeKey === "A"
+                      ? "#6AA6FF"
+                      : snapshot.actualGradeKey === "B"
+                      ? "#F59E0B"
+                      : "#6B7390",
+                }}
+              >
+                {snapshot.actualGradeLabel}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-4 gap-3 mb-3">
+        <KpiTile label="KPI муж" value={areaBand?.label ?? "—"} />
+        <KpiTile label="Норм цаг" value={`${expectedHours} ц`} />
+        <KpiTile label="Бодит цаг" value={`${actualHours.toFixed(1)} ц`} />
+        <KpiTile
+          label="Биелэлт"
+          value={efficiency > 0 ? `${efficiencyPct}%` : "—"}
+          accent={
+            efficiency === 0
+              ? undefined
+              : onBudget
+              ? "#22C55E"
+              : efficiency >= 0.85
+              ? "#F59E0B"
+              : "#EF4444"
+          }
+        />
+      </div>
+      <div className="grid grid-cols-3 gap-3 mb-4 text-[11px]">
+        <KpiPill label="Ажилласан" value={workHours} color="#22C55E" />
+        <KpiPill label="Захиалагч хүлээсэн" value={clientWaitHours} color="#6AA6FF" />
+        <KpiPill label="Засвар" value={revisionHours} color="#F59E0B" />
+      </div>
+      {snapshot && (
+        <div className="grid grid-cols-3 gap-3 mb-4 pb-4 border-b border-bd">
+          <RatingTile
+            label="Гүйцэтгэлийн чанар"
+            rating={snapshot.qualityRating}
+            color="#FBBF24"
+          />
+          <RatingTile
+            label="Захиалагч сэтгэл"
+            rating={snapshot.clientSatisfaction}
+            color="#22D3EE"
+          />
+          <div className="border border-bd rounded-md px-3 py-2.5 bg-white/[0.02]">
+            <div className="text-[10px] uppercase tracking-wider text-sub font-medium mb-1">
+              Хугацааны биелэлт
+            </div>
+            <div
+              className="text-[16px] font-semibold tabular-nums"
+              style={{ color: snapshot.onTime ? "#22C55E" : "#EF4444" }}
+            >
+              {snapshot.onTime ? "✓ Цаг тухайд" : "⚠ Хоцорсон"}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {scores.length > 0 && (
+        <details>
+          <summary className="cursor-pointer text-[12px] text-sub hover:text-tx">
+            7 шалгуурын оноо
+          </summary>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {scores.map((s, i) => (
+              <div key={i} className="flex items-center gap-2 text-[12px]">
+                <div className="text-sub w-5">{i + 1}.</div>
+                <div className="flex-1 truncate">{s.label}</div>
+                <div className="tabular-nums font-semibold text-brand">{s.score}/10</div>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function RatingTile({
+  label,
+  rating,
+  color,
+}: {
+  label: string;
+  rating: number | null;
+  color: string;
+}) {
+  return (
+    <div className="border border-bd rounded-md px-3 py-2.5 bg-white/[0.02]">
+      <div className="text-[10px] uppercase tracking-wider text-sub font-medium mb-1">
+        {label}
+      </div>
+      <div className="flex items-center gap-1.5">
+        {rating != null ? (
+          <>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <span
+                key={i}
+                className="text-[14px]"
+                style={{ color: i <= rating ? color : "#2A3145" }}
+              >
+                ★
+              </span>
+            ))}
+            <span
+              className="ml-1 text-[12px] font-semibold tabular-nums"
+              style={{ color }}
+            >
+              {rating}/5
+            </span>
+          </>
+        ) : (
+          <span className="text-sub text-[13px]">—</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function KpiTile({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: string;
+}) {
+  return (
+    <div className="border border-bd rounded-md px-3 py-2.5 bg-white/[0.02]">
+      <div className="text-[10px] uppercase tracking-wider text-sub font-medium mb-1">
+        {label}
+      </div>
+      <div
+        className="text-[16px] font-semibold tabular-nums"
+        style={accent ? { color: accent } : undefined}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function KpiPill({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: string;
+}) {
+  return (
+    <div
+      className="flex items-center justify-between px-3 py-2 rounded-md border"
+      style={{ borderColor: `${color}40`, background: `${color}10` }}
+    >
+      <span className="text-sub">{label}</span>
+      <span className="font-semibold tabular-nums" style={{ color }}>
+        {value.toFixed(1)} ц
+      </span>
     </div>
   );
 }

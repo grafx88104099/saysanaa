@@ -26,6 +26,7 @@ type Initial = {
   autocadLevel?: SkillLevel;
   sketchupLevel?: SkillLevel;
   languages?: string[];
+  startedWorkAt?: string | null;  // ISO date "YYYY-MM-DD"
 };
 
 function Submit({ label }: { label: string }) {
@@ -120,6 +121,21 @@ export default function EmployeeForm({
             />
           </Field>
         </Row>
+        <Row>
+          <Field
+            label="Ажилд орсон огноо"
+            hint="KPI туршлагын тооцоонд хэрэглэгдэнэ"
+            error={fe.startedWorkAt}
+          >
+            <input
+              name="startedWorkAt"
+              type="date"
+              defaultValue={initial?.startedWorkAt ?? ""}
+              className="input [color-scheme:dark]"
+            />
+          </Field>
+          <div />
+        </Row>
       </Section>
 
       <Section title="Ур чадвар">
@@ -209,11 +225,13 @@ function Field({
   label,
   required,
   error,
+  hint,
   children,
 }: {
   label: string;
   required?: boolean;
   error?: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -222,6 +240,7 @@ function Field({
         {label} {required && <span className="text-white/70">*</span>}
       </label>
       {children}
+      {hint && <div className="text-[10px] text-white/40 mt-1">{hint}</div>}
       {error && <div className="text-[11px] text-white/70 mt-1">{error}</div>}
     </div>
   );

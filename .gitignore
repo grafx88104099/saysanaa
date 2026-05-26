@@ -13,3 +13,6 @@ next-env.d.ts
 # Local design notes / scratchpad
 /өмнө санаа/
 *.xlsx
+
+# Claude Code local config
+.claude/

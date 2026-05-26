@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8" />
+<title>Business Insights — Facebook & Борлуулалт</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0b1020; --panel:#121a33; --panel2:#18224a; --ink:#e7ecff; --mute:#9aa6cf;
+    --brand:#6aa6ff; --brand2:#8b5cf6; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    --line:#24305e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+       background:radial-gradient(1200px 600px at 10% -10%,#1a2350 0%,transparent 60%),
+                  radial-gradient(900px 500px at 110% 10%,#2a1a55 0%,transparent 60%), var(--bg);
+       color:var(--ink); min-height:100vh;}
+  header{padding:22px 28px 0;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+  h1{margin:0 0 4px;font-size:22px;letter-spacing:.2px}
+  .sub{color:var(--mute);font-size:13px}
+  .loader{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13px}
+  .loader input{color:var(--ink)}
+  .tabs{display:flex;gap:4px;padding:16px 28px 0;border-bottom:1px solid var(--line);margin-bottom:0}
+  .tab{padding:10px 18px;border-radius:10px 10px 0 0;cursor:pointer;background:transparent;
+       color:var(--mute);font-size:14px;font-weight:500;border:1px solid transparent;border-bottom:none;
+       transition:all .15s}
+  .tab:hover{color:var(--ink)}
+  .tab.active{background:linear-gradient(180deg,var(--panel),var(--panel2));
+              color:var(--ink);border-color:var(--line);border-bottom:1px solid var(--panel2)}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+  .wrap{padding:16px 28px 40px;display:grid;gap:16px}
+  .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+  .kpis.k4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .card{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
+        border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+        box-shadow:0 6px 24px rgba(0,0,0,.25)}
+  .kpi .lbl{color:var(--mute);font-size:12px;margin-bottom:6px}
+  .kpi .val{font-size:22px;font-weight:700}
+  .kpi .delta{font-size:12px;margin-top:4px;color:var(--mute)}
+  .up{color:var(--ok)} .down{color:var(--bad)} .flat{color:var(--mute)}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:2fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  .g2e{grid-template-columns:1fr 1fr}
+  h3{margin:0 0 10px;font-size:14px;color:#cfd6ff;letter-spacing:.3px;text-transform:uppercase}
+  .chart-box{position:relative;height:280px}
+  .chart-sm{position:relative;height:260px}
+  .chart-md{position:relative;height:340px}
+  .insight{background:linear-gradient(180deg,#15224a,#101a3c);border:1px solid #2a3875;
+           border-radius:14px;padding:16px 18px}
+  .insight h3{color:#ffd580}
+  .insight ul{margin:6px 0 0;padding-left:18px;line-height:1.55;font-size:14px}
+  .insight li{margin:6px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;margin-right:6px}
+  .tag.ok{background:rgba(34,197,94,.15);color:#7bdd9c;border:1px solid rgba(34,197,94,.3)}
+  .tag.warn{background:rgba(245,158,11,.15);color:#fbcf7a;border:1px solid rgba(245,158,11,.35)}
+  .tag.bad{background:rgba(239,68,68,.15);color:#ff9b9b;border:1px solid rgba(239,68,68,.35)}
+  .tag.info{background:rgba(106,166,255,.15);color:#9dbfff;border:1px solid rgba(106,166,255,.35)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}
+  th{color:var(--mute);font-weight:500;font-size:12px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr.vip td{background:rgba(106,166,255,.06)}
+  .bar-inline{display:inline-block;height:8px;border-radius:4px;background:linear-gradient(90deg,#6aa6ff,#8b5cf6);vertical-align:middle}
+  .status{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:8px}
+  .st-ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#7bdd9c}
+  .st-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#fbcf7a}
+  .st-bad{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ff9b9b}
+  .big-num{font-size:28px;font-weight:700;color:#ffd580}
+  .scroll{max-height:380px;overflow-y:auto}
+  .scroll::-webkit-scrollbar{width:6px} .scroll::-webkit-scrollbar-thumb{background:#2a3875;border-radius:4px}
+  @media(max-width:1100px){.kpis,.kpis.k4{grid-template-columns:repeat(2,1fr)} .g2,.g3,.g2e{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📊 Business Insights — Монгол хэлтэй дүн шинжилгээ</h1>
+    <div class="sub">Эх сурвалж: <b>CSV файлууд</b> · Facebook + Борлуулалт нэгтгэсэн самбар</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="fb">📱 Facebook Insights</div>
+  <div class="tab" data-tab="sales">💰 Борлуулалтын Insights</div>
+</div>
+
+<!-- ============ FACEBOOK TAB ============ -->
+<div class="tab-panel active" id="tab-fb">
+  <div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="sub">Хугацаа: <b id="fb-range">—</b> · <b id="fb-days">0</b> хоног</div>
+      <label class="loader">📁 Facebook CSV: <input type="file" id="fb-picker" multiple accept=".csv" /></label>
+    </div>
+    <div id="fb-status" class="status st-warn">CSV уншиж байна…</div>
+    <div class="kpis" id="fb-kpis"></div>
+
+    <div class="grid g2">
+      <div class="card"><h3>📈 Өдрийн үзүүлэлтийн чиг хандлага</h3>
+        <div class="chart-box"><canvas id="fb-trend"></canvas></div></div>
+      <div class="insight"><h3>🔍 Гол дүгнэлт</h3><ul id="fb-insights"></ul></div>
+    </div>
+
+    <div class="grid g2e">
+      <div class="card"><h3>💬 Харилцан үйлдэл ба Линк товшилт</h3>
+        <div class="chart-sm"><canvas id="fb-engagement"></canvas></div></div>
+      <div class="card"><h3>👥 Шинэ дагагчид (өдрөөр)</h3>
+        <div class="chart-sm"><canvas id="fb-follows"></canvas></div></div>
+    </div>
+
+    <div class="grid g3">
+      <div class="card"><h3>🎞 Контент формат — Үзэлт</h3>
+        <div class="chart-sm"><canvas id="fb-fmtViews"></canvas></div></div>
+      <div class="card"><h3>❤️ Контент формат — Үйлдэл</h3>
+        <div class="chart-sm"><canvas id="fb-fmtInter"></canvas></div></div>
+      <div class="card"><h3>⚡ Үр ашгийн харьцаа (1 постонд)</h3>
+        <div class="chart-sm"><canvas id="fb-efficiency"></canvas></div></div>
+    </div>
+
+    <div class="grid g3">
+      <div class="card"><h3>🧑‍🤝‍🧑 Нас, Хүйс (%)</h3>
+        <div class="chart-sm"><canvas id="fb-age"></canvas></div></div>
+      <div class="card"><h3>🏙 ТОП хотууд (%)</h3>
+        <div class="chart-sm"><canvas id="fb-cities"></canvas></div></div>
+      <div class="card"><h3>🌍 ТОП улсууд (%)</h3>
+        <div class="chart-sm"><canvas id="fb-countries"></canvas></div></div>
+    </div>
+
+    <div class="grid g2e">
+      <div class="card"><h3>🏆 Шилдэг 7 хоног (Үзэлтээр)</h3><div id="fb-bestDays"></div></div>
+      <div class="card"><h3>📝 Стратегийн зөвлөмж</h3>
+        <ul id="fb-recs" style="margin:6px 0 0;padding-left:18px;line-height:1.6;font-size:14px"></ul></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SALES TAB ============ -->
+<div class="tab-panel" id="tab-sales">
+  <div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="sub">Хугацаа: <b id="s-range">2025-04-25 → 2026-04-25</b> · Шинэ датаг доор upload хийнэ үү</div>
+      <label class="loader">📁 Sales CSV: <input type="file" id="s-picker" multiple accept=".csv" />
+        <span style="color:var(--mute);margin-left:8px">(3 файл: Sales report, bookings_sessions, transactions_items)</span>
+      </label>
+    </div>
+    <div id="s-status" class="status st-warn">Sales CSV уншиж байна…</div>
+
+    <!-- Executive KPI row -->
+    <div class="kpis" id="s-kpis"></div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3>💎 ТОП 15 үйлчилгээ — Орлогын жин (Pareto)</h3>
+        <div class="chart-md"><canvas id="s-itemsRevenue"></canvas></div>
+      </div>
+      <div class="insight">
+        <h3>🎯 ШИЙДВЭР ГАРГАХ ИНСАЙТ</h3>
+        <ul id="s-execInsights"></ul>
+      </div>
+    </div>
+
+    <div class="grid g2e">
+      <div class="card">
+        <h3>📊 ABC шинжилгээ — Үйлчилгээний орлогын төвлөрөл</h3>
+        <div class="chart-sm"><canvas id="s-pareto"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>🔁 Үйлчилгээний давтамж (Orders vs Revenue)</h3>
+        <div class="chart-sm"><canvas id="s-scatter"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid g3">
+      <div class="card">
+        <h3>👨‍⚕️ Ажилтны үр ашиг — Орлого/Цаг</h3>
+        <div class="chart-sm"><canvas id="s-staffRevPerHour"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>⏱ Ажилтны ачаалал — Нийт цаг</h3>
+        <div class="chart-sm"><canvas id="s-staffHours"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>🎫 Ажилтны захиалга — Нийт session</h3>
+        <div class="chart-sm"><canvas id="s-staffSessions"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid g2e">
+      <div class="card">
+        <h3>👑 VIP харилцагчид — ТОП 15 (Орлогоор)</h3>
+        <div class="scroll"><div id="s-topCustomers"></div></div>
+      </div>
+      <div class="card">
+        <h3>🧩 Харилцагчийн сегментчлэл (Order давтамжаар)</h3>
+        <div class="chart-sm"><canvas id="s-custSeg"></canvas></div>
+        <div id="s-custSegLegend" style="margin-top:8px;font-size:12px;color:var(--mute)"></div>
+      </div>
+    </div>
+
+    <div class="grid g2e">
+      <div class="card">
+        <h3>💰 ТОП үйлчилгээнүүдийн бүрэн жагсаалт</h3>
+        <div class="scroll"><div id="s-itemsTable"></div></div>
+      </div>
+      <div class="card">
+        <h3>👨‍⚕️ Ажилтны гүйцэтгэлийн товч</h3>
+        <div id="s-staffTable"></div>
+      </div>
+    </div>
+
+    <!-- ===== REPEAT CUSTOMER ANALYSIS ===== -->
+    <div class="card" style="border-color:#f59e0b55">
+      <h3 style="color:#ffd580">🔁 ДАВТАН ҮЙЛЧИЛҮҮЛЭГЧИЙН ДЭЛГЭРЭНГҮЙ ШИНЖИЛГЭЭ</h3>
+      <div class="kpis k4" id="s-repeatKpis" style="margin-bottom:12px"></div>
+      <div class="grid g2e">
+        <div>
+          <h3 style="margin-top:6px">📊 Давтамжийн тархалт (захиалгын тоогоор)</h3>
+          <div class="chart-sm"><canvas id="s-repeatDist"></canvas></div>
+        </div>
+        <div>
+          <h3 style="margin-top:6px">💵 Орлогын эх үүсвэр: Шинэ vs Давтан</h3>
+          <div class="chart-sm"><canvas id="s-newVsRepeat"></canvas></div>
+          <div id="s-newVsRepeatLegend" style="margin-top:8px;font-size:12px;color:var(--mute)"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g2e">
+      <div class="card">
+        <h3>👑 ТОП 30 давтан үйлчилүүлэгч — Давтамж & Интервал</h3>
+        <div class="sub" style="margin-bottom:8px">365 хоногийн хугацаанд · дундаж <b>интервал</b> = 365 / захиалгын тоо</div>
+        <div class="scroll"><div id="s-repeatTopTable"></div></div>
+      </div>
+      <div class="card">
+        <h3>🩺 "Давтан үзлэг" үйлчилгээний задаргаа</h3>
+        <div id="s-followupBox"></div>
+      </div>
+    </div>
+
+    <div class="grid g2e">
+      <div class="card">
+        <h3>⏱ Дундаж интервал — Сегмент тус бүрээр</h3>
+        <div class="chart-sm"><canvas id="s-intervalBySeg"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>🎯 Retention метрик — Мэргэжлийн хэмжилт</h3>
+        <div id="s-retentionTable"></div>
+      </div>
+    </div>
+
+    <div class="grid g2e">
+      <div class="card"><h3>🔥 Стратегийн зөвлөмж — Мэргэжлийн дүгнэлт</h3>
+        <ul id="s-recs" style="margin:6px 0 0;padding-left:18px;line-height:1.65;font-size:14px"></ul></div>
+      <div class="card"><h3>⚠ Анхаарах хэсэг / Эрсдэл</h3>
+        <ul id="s-risks" style="margin:6px 0 0;padding-left:18px;line-height:1.65;font-size:14px"></ul></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======================================================
+   COMMON HELPERS
+   ====================================================== */
+const money = n => (n||0).toLocaleString("mn-MN");
+const mnt   = n => "₮ "+(Math.round(n||0)).toLocaleString("mn-MN");
+const sum   = a => a.reduce((s,x)=>s+(x||0),0);
+function setStatus(el, msg, cls){ el.textContent = msg; el.className = "status "+cls; }
+
+function parseCSV(text){
+  text = text.replace(/^\uFEFF/,"").replace(/\r/g,"");
+  const lines = text.split("\n").filter(l=>l.length && !/^sep=/i.test(l));
+  return lines.map(line=>{
+    const out=[]; let cur="", q=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c === '"'){ if(q && line[i+1]==='"'){cur+='"';i++;} else q=!q; }
+      else if(c === ',' && !q){ out.push(cur); cur=""; }
+      else cur+=c;
+    }
+    out.push(cur); return out;
+  });
+}
+async function readFile(file){
+  const buf = await file.arrayBuffer();
+  const b = new Uint8Array(buf);
+  let enc = "utf-8";
+  if(b[0]===0xFF && b[1]===0xFE) enc="utf-16le";
+  else if(b[0]===0xFE && b[1]===0xFF) enc="utf-16be";
+  return new TextDecoder(enc).decode(buf);
+}
+function parseMoney(s){
+  if(s==null) return 0;
+  const v = String(s).replace(/[₮\s,]/g,"").replace(/"/g,"");
+  return Number(v)||0;
+}
+function parseIntLike(s){
+  if(s==null) return 0;
+  const v = String(s).replace(/[",\s]/g,"");
+  return Number(v)||0;
+}
+function parseFloatLike(s){
+  if(s==null) return 0;
+  const v = String(s).replace(/[",\s]/g,"");
+  return parseFloat(v)||0;
+}
+
+/* Tabs */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById("tab-"+t.dataset.tab).classList.add("active");
+  });
+});
+
+/* ======================================================
+   FACEBOOK INSIGHTS
+   ====================================================== */
+const CITY_MN = {"Ulaanbaatar":"Улаанбаатар","Darkhan":"Дархан","Erdenet":"Эрдэнэт","Seoul":"Сөүл",
+  "Choibalsan":"Чойбалсан","Dalandzadgad":"Даланзадгад","Sydney":"Сидней","Arvayheer":"Арвайхээр",
+  "Bayanhongor":"Баянхонгор","Sain-Shand":"Сайншанд"};
+const COUNTRY_MN = {"Mongolia":"Монгол","South Korea":"Өмнөд Солонгос","Japan":"Япон",
+  "Australia":"Австрали","United States":"АНУ","Czech Republic":"Чех","Germany":"Герман",
+  "Ireland":"Ирланд","China":"Хятад","Hungary":"Унгар"};
+const FB_FILES = ["Views.csv","Viewers.csv","Visits.csv","Follows.csv","Interactions.csv",
+               "Link clicks.csv","Top content formats.csv","Audience.csv"];
+
+function parseDaily(rows){
+  const out=[];
+  for(const r of rows){
+    if(r.length<2) continue;
+    const d = r[0], v = r[1];
+    if(/^\d{4}-\d{2}-\d{2}/.test(d)) out.push([d.slice(0,10), Number(v)||0]);
+  }
+  return out;
+}
+function parseTopFormats(rows){
+  const sections = {};
+  let cur=null, keys=null, vals=null;
+  for(const r of rows){
+    if(r.length===1 && r[0]){ cur = r[0]; keys=null; vals=null; continue; }
+    if(!cur) continue;
+    if(!keys){ keys = r.filter(x=>x!==""); continue; }
+    if(!vals){
+      vals = r.filter(x=>x!=="").map(x=>Number(x)||0);
+      const obj={}; keys.forEach((k,i)=>obj[k]=vals[i]||0);
+      sections[cur]=obj; cur=null;
+    }
+  }
+  return sections;
+}
+function parseAudience(rows){
+  const res = {age:{}, cities:{}, countries:{}};
+  let section=null, header=null;
+  for(const r of rows){
+    const nonEmpty = r.filter(x=>x!=="");
+    if(r.length===1 && nonEmpty.length===1){
+      const t = r[0].toLowerCase();
+      if(t.includes("age")) section="age";
+      else if(t.includes("cities")) section="cities";
+      else if(t.includes("countries")) section="countries";
+      header=null; continue;
+    }
+    if(!section) continue;
+    if(section==="age"){
+      if(r[0]==="" && (r[1]==="Women"||r[1]==="Men")) continue;
+      if(/^\d+/.test(r[0])||r[0]==="65+"){
+        res.age[r[0]] = {w:Number(r[1])||0, m:Number(r[2])||0};
+      }
+    } else {
+      if(!header){ header = r.map(x=>x.split(",")[0].trim()); }
+      else {
+        header.forEach((k,i)=>{
+          if(!k) return;
+          const name = section==="cities" ? (CITY_MN[k]||k) : (COUNTRY_MN[k]||k);
+          res[section][name] = Number(r[i])||0;
+        });
+        section=null; header=null;
+      }
+    }
+  }
+  return res;
+}
+
+async function fbLoadFetch(){
+  const data = {};
+  for(const f of FB_FILES){
+    const res = await fetch("facebook/"+encodeURIComponent(f));
+    if(!res.ok) throw new Error("Fetch fail: "+f);
+    data[f] = await res.text();
+  }
+  return data;
+}
+async function fbLoadPicker(files){
+  const data = {};
+  for(const f of files) data[f.name] = await readFile(f);
+  return data;
+}
+
+function fbProcess(raw){
+  const pick = name => raw[name] ? parseCSV(raw[name]) : [];
+  const viewsD   = parseDaily(pick("Views.csv"));
+  const viewersD = parseDaily(pick("Viewers.csv"));
+  const visitsD  = parseDaily(pick("Visits.csv"));
+  const followsD = parseDaily(pick("Follows.csv"));
+  const interD   = parseDaily(pick("Interactions.csv"));
+  const clicksD  = parseDaily(pick("Link clicks.csv"));
+  const fmt      = parseTopFormats(pick("Top content formats.csv"));
+  const aud      = parseAudience(pick("Audience.csv"));
+  const map = d => Object.fromEntries(d);
+  const dates = [...new Set([...viewsD,...viewersD,...visitsD,...followsD,...interD,...clicksD].map(x=>x[0]))].sort();
+  const mV=map(viewsD), mVr=map(viewersD), mVs=map(visitsD), mF=map(followsD), mI=map(interD), mC=map(clicksD);
+  const daily = dates.map(d=>({date:d, views:mV[d]||0, viewers:mVr[d]||0, visits:mVs[d]||0,
+    follows:mF[d]||0, inter:mI[d]||0, clicks:mC[d]||0}));
+  return {daily, fmt, aud};
+}
+
+let fbCharts = [];
+function fbRender({daily, fmt, aud}){
+  fbCharts.forEach(c=>c.destroy()); fbCharts=[];
+  const labels=daily.map(d=>d.date.slice(5));
+  const views=daily.map(d=>d.views), viewers=daily.map(d=>d.viewers), visits=daily.map(d=>d.visits);
+  const follows=daily.map(d=>d.follows), inter=daily.map(d=>d.inter), clicks=daily.map(d=>d.clicks);
+  document.getElementById("fb-range").textContent = daily.length ? daily[0].date+" → "+daily.at(-1).date : "—";
+  document.getElementById("fb-days").textContent  = daily.length;
+
+  const delta = arr => { const a=sum(arr.slice(-7)), b=sum(arr.slice(-14,-7));
+    return {pct: b===0?(a>0?100:0):((a-b)/b)*100}; };
+  const KPI = [
+    {lbl:"Нийт үзэлт",val:sum(views),d:delta(views),icon:"👁"},
+    {lbl:"Нийт үзэгчид*",val:sum(viewers),d:delta(viewers),icon:"🧍"},
+    {lbl:"Хуудасны зочилт",val:sum(visits),d:delta(visits),icon:"🚪"},
+    {lbl:"Шинэ дагагч",val:sum(follows),d:delta(follows),icon:"➕"},
+    {lbl:"Харилцан үйлдэл",val:sum(inter),d:delta(inter),icon:"❤️"},
+    {lbl:"Линк товшилт",val:sum(clicks),d:delta(clicks),icon:"🔗"},
+  ];
+  document.getElementById("fb-kpis").innerHTML = KPI.map(k=>{
+    const p=k.d.pct, cls=p>2?"up":p<-2?"down":"flat", ar=p>2?"▲":p<-2?"▼":"■";
+    return `<div class="card kpi"><div class="lbl">${k.icon} ${k.lbl}</div>
+      <div class="val">${money(k.val)}</div>
+      <div class="delta ${cls}">${ar} ${p.toFixed(1)}% (7 хон. vs өмнөх 7)</div></div>`;
+  }).join("");
+
+  Chart.defaults.color="#b9c2e6"; Chart.defaults.borderColor="#24305e";
+  const grad = (ctx,c1,c2)=>{const g=ctx.createLinearGradient(0,0,0,260);g.addColorStop(0,c1);g.addColorStop(1,c2);return g;};
+
+  fbCharts.push(new Chart(document.getElementById("fb-trend"),{
+    type:"line",data:{labels,datasets:[
+      {label:"Үзэлт",data:views,borderColor:"#6aa6ff",backgroundColor:ctx=>grad(ctx.chart.ctx,"rgba(106,166,255,.4)","rgba(106,166,255,0)"),fill:true,tension:.35,pointRadius:0,borderWidth:2},
+      {label:"Үзэгчид",data:viewers,borderColor:"#8b5cf6",tension:.35,pointRadius:0,borderWidth:2},
+      {label:"Зочилт",data:visits,borderColor:"#22c55e",tension:.35,pointRadius:0,borderWidth:2},
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+      plugins:{legend:{position:"bottom"}},scales:{y:{beginAtZero:true,grid:{color:"#1d2750"}},x:{grid:{display:false}}}}
+  }));
+  fbCharts.push(new Chart(document.getElementById("fb-engagement"),{type:"bar",data:{labels,datasets:[
+      {label:"Харилцан үйлдэл",data:inter,backgroundColor:"#f472b6",borderRadius:4},
+      {label:"Линк товшилт",data:clicks,backgroundColor:"#38bdf8",borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}},
+      scales:{y:{beginAtZero:true,grid:{color:"#1d2750"}},x:{grid:{display:false}}}}}));
+  fbCharts.push(new Chart(document.getElementById("fb-follows"),{type:"bar",
+    data:{labels,datasets:[{label:"Шинэ дагагч",data:follows,backgroundColor:"#22c55e",borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true,grid:{color:"#1d2750"}},x:{grid:{display:false}}}}}));
+
+  const fV=fmt["Views"]||{}, fI=fmt["Content interactions"]||{}, fP=fmt["Published content"]||{};
+  fbCharts.push(new Chart(document.getElementById("fb-fmtViews"),{type:"doughnut",
+    data:{labels:Object.keys(fV),datasets:[{data:Object.values(fV),
+      backgroundColor:["#6aa6ff","#8b5cf6","#f472b6","#22c55e","#f59e0b","#94a3b8","#ef4444"]}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}}));
+  fbCharts.push(new Chart(document.getElementById("fb-fmtInter"),{type:"doughnut",
+    data:{labels:Object.keys(fI),datasets:[{data:Object.values(fI),backgroundColor:["#f472b6","#6aa6ff","#8b5cf6"]}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}}));
+
+  const effMap = {"Photo":"Photos","Reels":"Reels","Stories":"Stories"};
+  const effLabels = Object.keys(effMap).filter(k=>fV[k] && fP[effMap[k]]);
+  const effData = effLabels.map(k=> Math.round(fV[k]/fP[effMap[k]]));
+  fbCharts.push(new Chart(document.getElementById("fb-efficiency"),{type:"bar",
+    data:{labels:effLabels,datasets:[{label:"Үзэлт / 1 пост",data:effData,
+      backgroundColor:["#6aa6ff","#8b5cf6","#f472b6"],borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:"y",plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:"#1d2750"}},y:{grid:{display:false}}}}}));
+
+  const age = aud.age||{};
+  fbCharts.push(new Chart(document.getElementById("fb-age"),{type:"bar",
+    data:{labels:Object.keys(age),datasets:[
+      {label:"Эмэгтэй",data:Object.values(age).map(x=>x.w),backgroundColor:"#f472b6",borderRadius:4},
+      {label:"Эрэгтэй",data:Object.values(age).map(x=>x.m),backgroundColor:"#6aa6ff",borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}},
+      scales:{y:{beginAtZero:true,grid:{color:"#1d2750"}},x:{grid:{display:false}}}}}));
+  fbCharts.push(new Chart(document.getElementById("fb-cities"),{type:"bar",
+    data:{labels:Object.keys(aud.cities||{}),datasets:[{data:Object.values(aud.cities||{}),backgroundColor:"#22c55e",borderRadius:4}]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:"#1d2750"}},y:{grid:{display:false}}}}}));
+  fbCharts.push(new Chart(document.getElementById("fb-countries"),{type:"bar",
+    data:{labels:Object.keys(aud.countries||{}),datasets:[{data:Object.values(aud.countries||{}),backgroundColor:"#f59e0b",borderRadius:4}]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:"#1d2750"}},y:{grid:{display:false}}}}}));
+
+  const tV=sum(views), tI=sum(inter), tC=sum(clicks);
+  const weekNow=sum(views.slice(-7)), weekPrev=sum(views.slice(-14,-7));
+  const weekGrowth = weekPrev? ((weekNow-weekPrev)/weekPrev*100).toFixed(1) : "—";
+  const er = tV? (tI/tV*1000).toFixed(1) : "0";
+  const ctr = tV? (tC/tV*100).toFixed(2) : "0";
+  const fmtTotal = sum(Object.values(fV));
+  const photoShare = fmtTotal? (fV.Photo/fmtTotal*100).toFixed(1) : "—";
+  const reelsShare = fmtTotal? (fV.Reels/fmtTotal*100).toFixed(1) : "—";
+  const womenShare = Object.values(age).reduce((s,x)=>s+x.w,0).toFixed(1);
+  const core = ((age["25-34"]?.w||0)+(age["35-44"]?.w||0)).toFixed(1);
+  const topDay = [...daily].sort((a,b)=>b.views-a.views)[0];
+  const clicksPeak = [...daily].sort((a,b)=>b.clicks-a.clicks)[0];
+
+  document.getElementById("fb-insights").innerHTML = [
+    `<span class="tag ok">ӨСӨЛТ</span> Сүүлийн 7 хоног өмнөх 7 хоногоос <b>${weekGrowth}%</b> өссөн. Оргил өдөр: <b>${topDay?.date}</b> (${money(topDay?.views||0)}).`,
+    `<span class="tag ok">КОНВЕРСИ</span> Линк товшилтын оргил: <b>${clicksPeak?.date}</b> — ${clicksPeak?.clicks} товшилт.`,
+    `<span class="tag warn">ЗӨРҮҮ</span> Photo <b>${photoShare}%</b> үзэлт эзэлдэг — 1 постны үр ашгаар тэргүүлнэ.`,
+    `<span class="tag ok">АУДИТОРИ</span> <b>${womenShare}% эмэгтэй</b>, <b>25–44 нас ${core}%</b>, <b>УБ ${aud.cities?.["Улаанбаатар"]||0}%</b>.`,
+    `<span class="tag warn">ENGAGEMENT</span> 1000 үзэлт тутамд <b>${er}</b> үйлдэл, CTR <b>${ctr}%</b>.`,
+  ].map(x=>`<li>${x}</li>`).join("");
+
+  document.getElementById("fb-bestDays").innerHTML = `<table><thead><tr>
+    <th>Огноо</th><th class="num">Үзэлт</th><th class="num">Үзэгч</th>
+    <th class="num">Үйлдэл</th><th class="num">Линк</th><th class="num">Дагагч</th></tr></thead><tbody>
+    ${[...daily].sort((a,b)=>b.views-a.views).slice(0,7).map(d=>`
+      <tr><td>${d.date}</td><td class="num">${money(d.views)}</td><td class="num">${money(d.viewers)}</td>
+      <td class="num">${money(d.inter)}</td><td class="num">${money(d.clicks)}</td><td class="num">${money(d.follows)}</td></tr>`).join("")}
+    </tbody></table>`;
+
+  document.getElementById("fb-recs").innerHTML = [
+    `📸 <b>Photo контентоо 2 дахин нэмэгдүүл</b> — 1 постонд ~${money(effData[0]||0)} үзэлт, ROI хамгийн өндөр.`,
+    `🎬 <b>Reels 7 хоногт 2–3 нийтэл</b> — одоо бага нийтлэгдсэн мөртлөө ${reelsShare}% үзэлт өгдөг.`,
+    `📖 <b>Stories-оор асуулга/санал</b> тавьж лояал үзэгчтэй харилцаа үүсгэ.`,
+    `🎯 <b>Target: 25–44 насны эмэгтэй, Улаанбаатар</b>.`,
+    `🔗 <b>Линк товшилтыг өдөрт 10+</b> байлгах — bio линк, pinned пост, сарын оффер.`,
+  ].map(x=>`<li>${x}</li>`).join("");
+}
+
+async function fbBoot(){
+  const s = document.getElementById("fb-status");
+  try{
+    setStatus(s,"CSV файлуудыг fetch хийж байна…","st-warn");
+    const raw = await fbLoadFetch();
+    const d = fbProcess(raw); fbRender(d);
+    setStatus(s,`✅ ${Object.keys(raw).length} CSV амжилттай уншигдлаа (${d.daily.length} өдөр)`,"st-ok");
+  }catch(e){
+    setStatus(s,"⚠️ Автоматаар уншиж чадсангүй. Дээрх 📁 товчоор Facebook 8 CSV-гаа сонгоно уу.","st-warn");
+  }
+}
+document.getElementById("fb-picker").addEventListener("change", async ev=>{
+  const s = document.getElementById("fb-status");
+  const files = [...ev.target.files]; if(!files.length) return;
+  try{
+    setStatus(s,"Файл боловсруулж байна…","st-warn");
+    const raw = await fbLoadPicker(files);
+    const d = fbProcess(raw); fbRender(d);
+    setStatus(s,`✅ ${files.length} CSV амжилттай (${d.daily.length} өдөр)`,"st-ok");
+  }catch(e){ setStatus(s,"❌ Алдаа: "+e.message,"st-bad"); }
+});
+
+/* ======================================================
+   SALES INSIGHTS
+   ====================================================== */
+const SALES_FILES = {
+  customers: /sales.?report/i,
+  staff:     /bookings.?sessions/i,
+  items:     /transactions.?items/i,
+};
+
+function parseCustomers(rows){
+  // "Customer name","Total orders","Avg. order value","Total sales"
+  const out = [];
+  for(let i=1;i<rows.length;i++){
+    const r = rows[i]; if(!r || !r[0]) continue;
+    out.push({
+      name: r[0],
+      orders: parseIntLike(r[1]),
+      aov: parseMoney(r[2]),
+      sales: parseMoney(r[3]),
+    });
+  }
+  return out.filter(x=>x.name);
+}
+function parseStaff(rows){
+  // "Staff name","Spots filled","Total sessions","Hours"
+  const out=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]; if(!r||!r[0]) continue;
+    out.push({
+      name:r[0], spots:parseIntLike(r[1]), sessions:parseIntLike(r[2]), hours:parseFloatLike(r[3]),
+    });
+  }
+  return out.filter(x=>x.name);
+}
+function parseItems(rows){
+  // "Item name","Total orders","Quantity","Gross sales","Discount","Tax","Item total","Refund"
+  const out=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]; if(!r||!r[0]) continue;
+    out.push({
+      name:r[0], orders:parseIntLike(r[1]), qty:parseIntLike(r[2]),
+      gross:parseMoney(r[3]), discount:parseMoney(r[4]), tax:parseMoney(r[5]),
+      total:parseMoney(r[6]), refund:parseMoney(r[7]),
+    });
+  }
+  return out.filter(x=>x.name);
+}
+
+async function salesLoadFetch(){
+  const files = [
+    "Sales report_2025-04-25-2026-04-25.csv",
+    "bookings_sessions_table_api_2025-04-25-2026-04-25.csv",
+    "transactions_items_table_api_2025-04-25-2026-04-25.csv",
+  ];
+  const data={};
+  for(const f of files){
+    const res = await fetch("sales/"+encodeURIComponent(f));
+    if(!res.ok) throw new Error("Fetch fail: "+f);
+    data[f] = await res.text();
+  }
+  return data;
+}
+async function salesLoadPicker(files){
+  const data={};
+  for(const f of files) data[f.name] = await readFile(f);
+  return data;
+}
+function salesProcess(raw){
+  const names = Object.keys(raw);
+  const findFile = re => names.find(n => re.test(n));
+  const cFile = findFile(SALES_FILES.customers);
+  const sFile = findFile(SALES_FILES.staff);
+  const iFile = findFile(SALES_FILES.items);
+  const customers = cFile ? parseCustomers(parseCSV(raw[cFile])) : [];
+  const staff     = sFile ? parseStaff(parseCSV(raw[sFile])) : [];
+  const items     = iFile ? parseItems(parseCSV(raw[iFile])) : [];
+  return {customers, staff, items};
+}
+
+let salesCharts=[];
+function salesRender({customers, staff, items}){
+  salesCharts.forEach(c=>c.destroy()); salesCharts=[];
+
+  /* ========== EXECUTIVE KPIs ========== */
+  const totalRevenue = sum(items.map(x=>x.total));
+  const totalGross   = sum(items.map(x=>x.gross));
+  const totalRefund  = sum(items.map(x=>x.refund));
+  const totalDiscount= sum(items.map(x=>x.discount));
+  const totalOrders  = sum(items.map(x=>x.orders));
+  const totalQty     = sum(items.map(x=>x.qty));
+  const totalCustomers = customers.length;
+  const payingCustomers = customers.filter(c=>c.sales>0).length;
+  const custRevenue = sum(customers.map(c=>c.sales));
+  const avgOrderVal = totalOrders ? totalRevenue/totalOrders : 0;
+  const avgCustValue = payingCustomers ? custRevenue/payingCustomers : 0;
+  const totalSessions = sum(staff.map(s=>s.sessions));
+  const totalHours = sum(staff.map(s=>s.hours));
+  const revenuePerHour = totalHours ? totalRevenue/totalHours : 0;
+  const refundRate = totalGross ? (totalRefund/totalGross*100) : 0;
+  const repeatCustomers = customers.filter(c=>c.orders>=2).length;
+  const repeatRate = totalCustomers ? (repeatCustomers/totalCustomers*100) : 0;
+
+  const KPI = [
+    {lbl:"💵 Нийт орлого", val:mnt(totalRevenue), sub:"Item total"},
+    {lbl:"🧾 Нийт захиалга", val:money(totalOrders), sub:money(totalQty)+" тоо ширхэг"},
+    {lbl:"💳 Дундаж захиалга (AOV)", val:mnt(avgOrderVal), sub:"1 захиалгын орлого"},
+    {lbl:"🧑‍🤝‍🧑 Нийт харилцагч", val:money(totalCustomers), sub:money(payingCustomers)+" төлбөрт"},
+    {lbl:"👑 Дундаж LTV", val:mnt(avgCustValue), sub:"1 харилцагчийн орлого"},
+    {lbl:"🔁 Давтан харилцагч", val:repeatRate.toFixed(1)+"%", sub:money(repeatCustomers)+" хүн (2+ захиалга)"},
+    {lbl:"⏱ Орлого/Цаг", val:mnt(revenuePerHour), sub:money(Math.round(totalHours))+" цаг нийт"},
+    {lbl:"🎫 Нийт session", val:money(totalSessions), sub:staff.length+" ажилтан"},
+  ];
+  const kpiEl = document.getElementById("s-kpis");
+  kpiEl.className = "kpis k4";
+  kpiEl.innerHTML = KPI.map(k=>`<div class="card kpi">
+    <div class="lbl">${k.lbl}</div>
+    <div class="val">${k.val}</div>
+    <div class="delta">${k.sub}</div></div>`).join("");
+
+  Chart.defaults.color="#b9c2e6"; Chart.defaults.borderColor="#24305e";
+
+  /* ========== TOP ITEMS BAR ========== */
+  const itemsByRev = [...items].sort((a,b)=>b.total-a.total);
+  const top15 = itemsByRev.slice(0,15);
+  salesCharts.push(new Chart(document.getElementById("s-itemsRevenue"),{
+    type:"bar",
+    data:{labels:top15.map(x=>x.name),datasets:[{
+      label:"Орлого (₮)",data:top15.map(x=>x.total),
+      backgroundColor:"#6aa6ff",borderRadius:6
+    }]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>mnt(ctx.parsed.x)}}},
+      scales:{x:{beginAtZero:true,grid:{color:"#1d2750"},ticks:{callback:v=>(v/1e6).toFixed(0)+"M"}},y:{grid:{display:false}}}}
+  }));
+
+  /* ========== PARETO (ABC) ========== */
+  let cum=0; const paretoLabels=[], paretoData=[];
+  itemsByRev.forEach((it,i)=>{
+    cum += it.total;
+    if(i<20){
+      paretoLabels.push(it.name.length>18?it.name.slice(0,18)+"…":it.name);
+      paretoData.push(+(cum/totalRevenue*100).toFixed(1));
+    }
+  });
+  salesCharts.push(new Chart(document.getElementById("s-pareto"),{
+    type:"line",
+    data:{labels:paretoLabels,datasets:[{label:"Хуримтлагдсан орлогын %",data:paretoData,
+      borderColor:"#f59e0b",backgroundColor:"rgba(245,158,11,.15)",fill:true,tension:.25,pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y+"%"}},
+        annotation:false},
+      scales:{y:{beginAtZero:true,max:100,grid:{color:"#1d2750"},ticks:{callback:v=>v+"%"}},
+              x:{ticks:{maxRotation:60,minRotation:45},grid:{display:false}}}}
+  }));
+
+  /* ========== SCATTER (orders vs revenue) ========== */
+  salesCharts.push(new Chart(document.getElementById("s-scatter"),{
+    type:"scatter",
+    data:{datasets:[{label:"Үйлчилгээ",
+      data:items.map(x=>({x:x.orders,y:x.total,name:x.name})),
+      backgroundColor:"#8b5cf6",pointRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>ctx.raw.name+" — "+ctx.raw.x+" orders · "+mnt(ctx.raw.y)}}},
+      scales:{x:{title:{display:true,text:"Захиалгын тоо"},grid:{color:"#1d2750"}},
+              y:{title:{display:true,text:"Орлого (₮)"},grid:{color:"#1d2750"},
+                 ticks:{callback:v=>(v/1e6).toFixed(0)+"M"}}}}
+  }));
+
+  /* ========== STAFF CHARTS ========== */
+  // attribute revenue to staff by their hour share
+  const staffSorted = [...staff].sort((a,b)=>b.hours-a.hours);
+  const revByHour = staffSorted.map(s => totalHours ? (s.hours/totalHours*totalRevenue) : 0);
+  const rph = staffSorted.map(s => s.hours ? revByHour[staffSorted.indexOf(s)]/s.hours : 0);
+  // simpler: revenue per hour is same constant across staff if we split proportionally; replace with sessions/hour
+  const sessionsPerHour = staffSorted.map(s => s.hours? s.sessions/s.hours : 0);
+
+  salesCharts.push(new Chart(document.getElementById("s-staffRevPerHour"),{
+    type:"bar",
+    data:{labels:staffSorted.map(s=>s.name),datasets:[{label:"Session/цаг",data:sessionsPerHour.map(v=>+v.toFixed(2)),
+      backgroundColor:"#22c55e",borderRadius:4}]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:"#1d2750"}},y:{grid:{display:false}}}}
+  }));
+  salesCharts.push(new Chart(document.getElementById("s-staffHours"),{
+    type:"bar",
+    data:{labels:staffSorted.map(s=>s.name),datasets:[{label:"Цаг",data:staffSorted.map(s=>s.hours),
+      backgroundColor:"#6aa6ff",borderRadius:4}]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:"#1d2750"}},y:{grid:{display:false}}}}
+  }));
+  salesCharts.push(new Chart(document.getElementById("s-staffSessions"),{
+    type:"bar",
+    data:{labels:staffSorted.map(s=>s.name),datasets:[{label:"Session",data:staffSorted.map(s=>s.sessions),
+      backgroundColor:"#f472b6",borderRadius:4}]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:"#1d2750"}},y:{grid:{display:false}}}}
+  }));
+
+  /* ========== TOP CUSTOMERS TABLE ========== */
+  const custSorted = [...customers].filter(c=>c.sales>0).sort((a,b)=>b.sales-a.sales);
+  const top15cust = custSorted.slice(0,15);
+  const maxCust = top15cust[0]?.sales || 1;
+  document.getElementById("s-topCustomers").innerHTML = `
+    <table><thead><tr>
+      <th>#</th><th>Харилцагч</th><th class="num">Орлого</th><th class="num">Захиалга</th>
+      <th class="num">AOV</th><th>Харьцаа</th>
+    </tr></thead><tbody>
+    ${top15cust.map((c,i)=>`
+      <tr class="${i<3?'vip':''}"><td>${i+1}</td><td><b>${c.name}</b></td>
+        <td class="num">${mnt(c.sales)}</td><td class="num">${c.orders}</td>
+        <td class="num">${mnt(c.aov)}</td>
+        <td><span class="bar-inline" style="width:${Math.round(c.sales/maxCust*120)}px"></span></td>
+      </tr>`).join("")}
+    </tbody></table>`;
+
+  /* ========== CUSTOMER SEGMENTATION ========== */
+  const seg = {once:0, light:0, regular:0, loyal:0, vip:0};
+  const segRev = {once:0, light:0, regular:0, loyal:0, vip:0};
+  customers.forEach(c=>{
+    let k;
+    if(c.orders<=1) k="once";
+    else if(c.orders<=3) k="light";
+    else if(c.orders<=9) k="regular";
+    else if(c.orders<=29) k="loyal";
+    else k="vip";
+    seg[k]++; segRev[k]+=c.sales;
+  });
+  const segLabels = {once:"1 удаа (шинэ)", light:"2–3 (хөнгөн)", regular:"4–9 (тогтмол)", loyal:"10–29 (лояал)", vip:"30+ (VIP)"};
+  salesCharts.push(new Chart(document.getElementById("s-custSeg"),{
+    type:"doughnut",
+    data:{labels:Object.values(segLabels),datasets:[{data:Object.keys(seg).map(k=>seg[k]),
+      backgroundColor:["#94a3b8","#38bdf8","#22c55e","#8b5cf6","#f59e0b"]}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}
+  }));
+  const segTotal = sum(Object.values(segRev));
+  document.getElementById("s-custSegLegend").innerHTML = Object.keys(seg).map(k=>
+    `<div>• <b>${segLabels[k]}</b>: ${seg[k]} харилцагч · орлого ${mnt(segRev[k])} (${segTotal?(segRev[k]/segTotal*100).toFixed(1):0}%)</div>`
+  ).join("");
+
+  /* ========== ITEMS FULL TABLE ========== */
+  document.getElementById("s-itemsTable").innerHTML = `
+    <table><thead><tr>
+      <th>#</th><th>Үйлчилгээ</th><th class="num">Орлого</th><th class="num">Orders</th>
+      <th class="num">AOV</th><th class="num">% нийтэд</th>
+    </tr></thead><tbody>
+    ${itemsByRev.map((it,i)=>`
+      <tr><td>${i+1}</td><td>${it.name}</td>
+        <td class="num">${mnt(it.total)}</td>
+        <td class="num">${money(it.orders)}</td>
+        <td class="num">${mnt(it.orders?it.total/it.orders:0)}</td>
+        <td class="num">${(it.total/totalRevenue*100).toFixed(1)}%</td></tr>`).join("")}
+    </tbody></table>`;
+
+  /* ========== STAFF TABLE ========== */
+  document.getElementById("s-staffTable").innerHTML = `
+    <table><thead><tr>
+      <th>Ажилтан</th><th class="num">Session</th><th class="num">Цаг</th>
+      <th class="num">Session/цаг</th><th class="num">% ачаалал</th>
+    </tr></thead><tbody>
+    ${staffSorted.map((s,i)=>`
+      <tr><td>${s.name}</td><td class="num">${money(s.sessions)}</td>
+        <td class="num">${money(s.hours)}</td>
+        <td class="num">${s.hours?(s.sessions/s.hours).toFixed(2):"—"}</td>
+        <td class="num">${totalHours?(s.hours/totalHours*100).toFixed(1):0}%</td></tr>`).join("")}
+    </tbody></table>`;
+
+  /* ========== REPEAT CUSTOMER ANALYSIS ========== */
+  const PERIOD_DAYS = 365; // 2025-04-25 → 2026-04-25
+  const paying = customers.filter(c=>c.orders>0);
+  const r2 = paying.filter(c=>c.orders>=2);
+  const r5 = paying.filter(c=>c.orders>=5);
+  const r10= paying.filter(c=>c.orders>=10);
+  const r30= paying.filter(c=>c.orders>=30);
+  const onceCust = paying.filter(c=>c.orders===1);
+  const onceRev  = sum(onceCust.map(c=>c.sales));
+  const repeatRev= sum(r2.map(c=>c.sales));
+  const repeatOrders = sum(r2.map(c=>c.orders));
+  const totalPayOrders = sum(paying.map(c=>c.orders));
+  const avgRepeatOrders = r2.length? (repeatOrders/r2.length) : 0;
+  const avgIntervalRepeat = avgRepeatOrders>1 ? (PERIOD_DAYS/avgRepeatOrders) : 0;
+
+  document.getElementById("s-repeatKpis").innerHTML = [
+    {lbl:"🔁 2+ удаа ирсэн", val:money(r2.length), sub:`${paying.length?(r2.length/paying.length*100).toFixed(1):0}% нийт харилцагчийн`},
+    {lbl:"⭐ 5+ удаа ирсэн", val:money(r5.length), sub:`${paying.length?(r5.length/paying.length*100).toFixed(1):0}% нийт харилцагчийн`},
+    {lbl:"💎 10+ удаа (лояал)", val:money(r10.length), sub:`${paying.length?(r10.length/paying.length*100).toFixed(1):0}% нийт харилцагчийн`},
+    {lbl:"👑 30+ удаа (VIP)", val:money(r30.length), sub:`${paying.length?(r30.length/paying.length*100).toFixed(1):0}% нийт харилцагчийн`},
+  ].map(k=>`<div class="card kpi"><div class="lbl">${k.lbl}</div>
+    <div class="val">${k.val}</div><div class="delta">${k.sub}</div></div>`).join("");
+
+  // Distribution histogram (buckets of order count)
+  const buckets = [
+    {lbl:"1 удаа",       min:1, max:1},
+    {lbl:"2 удаа",       min:2, max:2},
+    {lbl:"3 удаа",       min:3, max:3},
+    {lbl:"4–5 удаа",     min:4, max:5},
+    {lbl:"6–9 удаа",     min:6, max:9},
+    {lbl:"10–19 удаа",   min:10,max:19},
+    {lbl:"20–29 удаа",   min:20,max:29},
+    {lbl:"30–49 удаа",   min:30,max:49},
+    {lbl:"50+ удаа",     min:50,max:Infinity},
+  ];
+  const bucketCounts = buckets.map(b=>paying.filter(c=>c.orders>=b.min && c.orders<=b.max).length);
+  const bucketRev = buckets.map(b=>sum(paying.filter(c=>c.orders>=b.min && c.orders<=b.max).map(c=>c.sales)));
+  salesCharts.push(new Chart(document.getElementById("s-repeatDist"),{
+    type:"bar",
+    data:{labels:buckets.map(b=>b.lbl),datasets:[
+      {label:"Харилцагчийн тоо",data:bucketCounts,backgroundColor:"#6aa6ff",borderRadius:4,yAxisID:"y"},
+      {label:"Орлого (сая ₮)",data:bucketRev.map(v=>+(v/1e6).toFixed(1)),backgroundColor:"#f59e0b",borderRadius:4,yAxisID:"y1",type:"line",tension:.3,borderColor:"#f59e0b",pointRadius:4,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}},
+      scales:{y:{beginAtZero:true,position:"left",grid:{color:"#1d2750"},title:{display:true,text:"Харилцагч"}},
+              y1:{beginAtZero:true,position:"right",grid:{display:false},title:{display:true,text:"Орлого (M₮)"}},
+              x:{grid:{display:false}}}}
+  }));
+
+  // New vs Repeat revenue doughnut
+  salesCharts.push(new Chart(document.getElementById("s-newVsRepeat"),{
+    type:"doughnut",
+    data:{labels:["1 удаагийн (шинэ)","Давтан (2+)"],
+      datasets:[{data:[onceRev,repeatRev],backgroundColor:["#94a3b8","#22c55e"]}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"},
+      tooltip:{callbacks:{label:ctx=>ctx.label+": "+mnt(ctx.parsed)}}}}
+  }));
+  const totCR = onceRev+repeatRev;
+  document.getElementById("s-newVsRepeatLegend").innerHTML = `
+    <div>• <b>Шинэ (1 удаа):</b> ${money(onceCust.length)} хүн · ${mnt(onceRev)} (${totCR?(onceRev/totCR*100).toFixed(1):0}%)</div>
+    <div>• <b>Давтан (2+):</b> ${money(r2.length)} хүн · ${mnt(repeatRev)} (${totCR?(repeatRev/totCR*100).toFixed(1):0}%)</div>
+    <div>• <b>Дундаж давтан захиалга:</b> ${avgRepeatOrders.toFixed(1)} удаа · <b>интервал ~${avgIntervalRepeat.toFixed(0)} хоног</b></div>`;
+
+  // Top 30 repeat customers
+  const repeatSorted = [...r2].sort((a,b)=>b.orders-a.orders).slice(0,30);
+  const maxOrd = repeatSorted[0]?.orders || 1;
+  document.getElementById("s-repeatTopTable").innerHTML = `
+    <table><thead><tr>
+      <th>#</th><th>Харилцагч</th><th class="num">Давтамж</th>
+      <th class="num">Интервал (хоног)</th><th class="num">Орлого</th><th class="num">AOV</th><th>Давтамж</th>
+    </tr></thead><tbody>
+    ${repeatSorted.map((c,i)=>{
+      const interval = c.orders>1 ? PERIOD_DAYS/c.orders : PERIOD_DAYS;
+      const freqLbl = c.orders>=30?"VIP":c.orders>=10?"Лояал":c.orders>=5?"Тогтмол":"Идэвхтэй";
+      const cls = c.orders>=10?"vip":"";
+      return `<tr class="${cls}"><td>${i+1}</td><td><b>${c.name}</b> <span class="tag ${c.orders>=30?'warn':'ok'}">${freqLbl}</span></td>
+        <td class="num"><b>${c.orders}</b> удаа</td>
+        <td class="num">~${interval.toFixed(1)}</td>
+        <td class="num">${mnt(c.sales)}</td>
+        <td class="num">${mnt(c.aov)}</td>
+        <td><span class="bar-inline" style="width:${Math.round(c.orders/maxOrd*120)}px"></span></td></tr>`;
+    }).join("")}
+    </tbody></table>`;
+
+  // Follow-up service ("Давтан үзлэг") breakdown
+  const followup = items.find(x=>/давтан\s*үзлэг/i.test(x.name));
+  const examItem = items.find(x=>/үзлэг\s*оношлогоо/i.test(x.name));
+  if(followup){
+    const exAOV = followup.orders? followup.total/followup.orders : 0;
+    const vsExam = examItem? (followup.orders/examItem.orders*100) : 0;
+    document.getElementById("s-followupBox").innerHTML = `
+      <div style="display:grid;gap:8px">
+        <div><span class="tag info">ҮЙЛЧИЛГЭЭ</span> <b>«${followup.name}»</b></div>
+        <div class="big-num">${money(followup.orders)} <span style="font-size:14px;color:var(--mute)">захиалга</span></div>
+        <div>• Нийт орлого: <b>${mnt(followup.total)}</b></div>
+        <div>• Нэг удаагийн дундаж: <b>${mnt(exAOV)}</b></div>
+        ${examItem?`<div>• Анхан шатны үзлэгтэй харьцуулбал: <b>${vsExam.toFixed(1)}%</b> (${money(examItem.orders)} анхан → ${money(followup.orders)} давтан)</div>`:""}
+        <div>• Нийт orders-д эзлэх хувь: <b>${totalOrders?(followup.orders/totalOrders*100).toFixed(1):0}%</b></div>
+        <div style="margin-top:8px;padding:10px;background:rgba(245,158,11,.08);border-radius:8px;font-size:13px">
+          ${examItem && followup.orders < examItem.orders*0.6
+            ? `⚠ <b>Follow-up retention сул</b> — анхан шатны үзлэгийн ${vsExam.toFixed(0)}% нь л давтан ирж байна. Эмчилгээний үр дүнг нэмэгдүүлэх, reminder систем суулгах шаардлагатай.`
+            : `✅ Follow-up хөтөлбөр сайн ажиллаж байна — үйлчилгээний давтан хэрэглээ өндөр.`}
+        </div>
+      </div>`;
+  } else {
+    document.getElementById("s-followupBox").innerHTML = `<div class="sub">«Давтан үзлэг» үйлчилгээ олдсонгүй.</div>`;
+  }
+
+  // Average interval by segment
+  const intSegLabels = ["2–3 удаа","4–9 удаа","10–29 удаа","30+ удаа"];
+  const intSegData = [
+    avgInterval(paying.filter(c=>c.orders>=2&&c.orders<=3)),
+    avgInterval(paying.filter(c=>c.orders>=4&&c.orders<=9)),
+    avgInterval(paying.filter(c=>c.orders>=10&&c.orders<=29)),
+    avgInterval(paying.filter(c=>c.orders>=30)),
+  ];
+  function avgInterval(group){
+    if(!group.length) return 0;
+    const avgOrd = sum(group.map(c=>c.orders))/group.length;
+    return avgOrd>1 ? PERIOD_DAYS/avgOrd : 0;
+  }
+  salesCharts.push(new Chart(document.getElementById("s-intervalBySeg"),{
+    type:"bar",
+    data:{labels:intSegLabels,datasets:[{label:"Дундаж интервал (хоног)",
+      data:intSegData.map(v=>+v.toFixed(1)),
+      backgroundColor:["#38bdf8","#22c55e","#8b5cf6","#f59e0b"],borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>"~"+ctx.parsed.y+" хоног тутам"}}},
+      scales:{y:{beginAtZero:true,grid:{color:"#1d2750"},title:{display:true,text:"хоног"}},
+              x:{grid:{display:false}}}}
+  }));
+
+  // Retention metrics table
+  const metrics = [
+    ["Нийт төлбөр хийсэн харилцагч", money(paying.length), "—"],
+    ["1 удаагийн харилцагч (шинэ)", money(onceCust.length), (onceCust.length/paying.length*100).toFixed(1)+"%"],
+    ["2+ давтан харилцагч", money(r2.length), (r2.length/paying.length*100).toFixed(1)+"%"],
+    ["Давтан харилцагчийн нийт захиалга", money(repeatOrders), (repeatOrders/totalPayOrders*100).toFixed(1)+"% нийт"],
+    ["Давтан харилцагчийн дундаж захиалга", avgRepeatOrders.toFixed(1)+" удаа", "—"],
+    ["Давтан харилцагчийн дундаж интервал", "~"+avgIntervalRepeat.toFixed(0)+" хоног", "—"],
+    ["Давтан харилцагчийн орлого", mnt(repeatRev), (totCR?repeatRev/totCR*100:0).toFixed(1)+"% нийт"],
+    ["Дундаж LTV (давтан)", mnt(r2.length?repeatRev/r2.length:0), "1 хүн"],
+    ["Дундаж LTV (шинэ/1 удаа)", mnt(onceCust.length?onceRev/onceCust.length:0), "1 хүн"],
+    ["LTV зөрүү (давтан/шинэ)", onceCust.length&&r2.length?((repeatRev/r2.length)/(onceRev/onceCust.length)).toFixed(1)+"x":"—", "үнэ цэнэ"],
+  ];
+  document.getElementById("s-retentionTable").innerHTML = `
+    <table><thead><tr><th>Метрик</th><th class="num">Утга</th><th class="num">Харьцаа</th></tr></thead>
+    <tbody>${metrics.map(m=>`<tr><td>${m[0]}</td><td class="num"><b>${m[1]}</b></td><td class="num">${m[2]}</td></tr>`).join("")}</tbody></table>`;
+
+  /* ========== EXECUTIVE INSIGHTS ========== */
+  // Pareto 80%
+  let p80 = 0; cum=0;
+  for(let i=0;i<itemsByRev.length;i++){ cum+=itemsByRev[i].total; if(cum/totalRevenue>=0.8){ p80=i+1; break; } }
+  const topItem = itemsByRev[0];
+  const top3Share = totalRevenue ? (itemsByRev.slice(0,3).reduce((s,x)=>s+x.total,0)/totalRevenue*100) : 0;
+  const vipRevShare = segTotal ? (segRev.vip/segTotal*100) : 0;
+  const loyalVipCust = seg.loyal + seg.vip;
+  const loyalVipRevShare = segTotal ? ((segRev.loyal+segRev.vip)/segTotal*100) : 0;
+  const topCust = custSorted[0];
+  const top10CustShare = custRevenue ? (custSorted.slice(0,10).reduce((s,x)=>s+x.sales,0)/custRevenue*100) : 0;
+  const topStaff = staffSorted[0];
+  const topStaffShare = totalSessions ? (topStaff.sessions/totalSessions*100) : 0;
+  const lowPerformers = itemsByRev.filter(x=>x.total<totalRevenue*0.001 && x.orders<=5).length;
+
+  document.getElementById("s-execInsights").innerHTML = [
+    `<span class="tag ok">ЭЗЭНТ ҮЙЛЧИЛГЭЭ</span> <b>«${topItem?.name}»</b> дангаар <b>${mnt(topItem?.total||0)}</b> орлого (<b>${((topItem?.total||0)/totalRevenue*100).toFixed(1)}%</b>) — гол эрэлттэй бүтээгдэхүүн. Ажилтнуудыг энэ үйлчилгээнд мэргэшүүл.`,
+    `<span class="tag info">PARETO 80/20</span> Орлогын <b>80%</b>-ийг зөвхөн <b>${p80}</b> үйлчилгээ бий болгож байна. Үлдсэн ${itemsByRev.length-p80} үйлчилгээ нэмэлт үнэ цэнэ багатай — сонголтоо цэгцлэх боломжтой.`,
+    `<span class="tag warn">ТОП 3 ТӨВЛӨРӨЛ</span> Орлогын <b>${top3Share.toFixed(1)}%</b> нь зөвхөн 3 үйлчилгээнээс — эрсдэл өндөр. Бусад өндөр маржийн үйлчилгээгээ идэвхтэй сурталчил.`,
+    `<span class="tag ok">VIP ХАРИЛЦАГЧ</span> <b>${seg.vip}</b> VIP харилцагч нийт орлогын <b>${vipRevShare.toFixed(1)}%</b>-ийг бүрдүүлж байна. Лояал+VIP (${loyalVipCust} хүн) = <b>${loyalVipRevShare.toFixed(1)}%</b> орлого. <b>Retention-д хөрөнгө оруул</b>.`,
+    `<span class="tag warn">ШИНЭ → ДАВТАН КОНВЕРСИ</span> <b>${(seg.once/totalCustomers*100).toFixed(1)}%</b> харилцагч зөвхөн 1 удаа ирсэн. Давтан ирэх хувь <b>${repeatRate.toFixed(1)}%</b> — 2 дахь захиалгад хөтлөх follow-up SMS/урамшууллын систем нэн шаардлагатай.`,
+    `<span class="tag info">ХАРИЛЦАГЧИЙН ТӨВЛӨРӨЛ</span> ТОП 10 харилцагч нийт ХАРИЛЦАГЧИЙН орлогын <b>${top10CustShare.toFixed(1)}%</b>-ийг бүрдүүлж байна. <b>${topCust?.name}</b> дангаар <b>${mnt(topCust?.sales||0)}</b>.`,
+    `<span class="tag ok">АЖИЛТНЫ ТЭРГҮҮЛЭГЧ</span> <b>${topStaff?.name}</b> нийт session-ийн <b>${topStaffShare.toFixed(1)}%</b>-ийг гүйцэтгэсэн (${money(topStaff?.sessions||0)}). Үйл явц стандартчилан бусдад зааварлуулах.`,
+    `<span class="tag bad">ЭРСДЭЛ</span> <b>${lowPerformers}</b> үйлчилгээ бараг орлогогүй (захиалга ≤5, орлого <0.1%). Цэсээс хасах, эсвэл packaging хийх шаардлагатай.`,
+    refundRate>1 ? `<span class="tag bad">БУЦААЛТ</span> Refund rate <b>${refundRate.toFixed(2)}%</b> — шалтгаан шалгах.` : `<span class="tag ok">БУЦААЛТ</span> Refund rate <b>${refundRate.toFixed(2)}%</b> — маш бага, чанар өндөр.`,
+  ].map(x=>`<li>${x}</li>`).join("");
+
+  /* ========== RECS ========== */
+  document.getElementById("s-recs").innerHTML = [
+    `🎯 <b>«${topItem?.name}»-д upsell бэлд</b> — дагалдах бүтээгдэхүүн/багц оруулбал AOV-г ${mnt(avgOrderVal)} → +15–25% хүртэл өсгөх боломж.`,
+    `💎 <b>VIP клуб</b> — 10+ захиалгатай ${loyalVipCust} харилцагчид хувийн эрх, тэргүүн дарааллын цаг, нууц оффер. Одоогоор орлогын ${loyalVipRevShare.toFixed(0)}%-ийг барьж байна.`,
+    `🔁 <b>Re-engagement кампанит</b> — 1 удаа ирээд эргэж ороогүй ${seg.once} харилцагчид 2 дахь удаагийн 15% хямдрал санал болго. Потенциал: ${mnt(seg.once*avgCustValue*0.3)} нэмэлт орлого.`,
+    `📦 <b>Pareto цэвэрлэгээ</b> — ${itemsByRev.length-p80} сул үйлчилгээнээс ${Math.max(0,itemsByRev.length-p80-5)}-г багцад оруулж эсвэл цэснээс хас.`,
+    `👨‍⚕️ <b>Ажилтны cross-training</b> — ${topStaff?.name}-ын гүйцэтгэлийн формулыг бусад ажилтнуудтай хуваалц. Одоо ачаалал ${topStaffShare.toFixed(0)}%-д нь төвлөрөөд байна.`,
+    `💰 <b>Үнийн стратегі</b> — top 5 үйлчилгээг 5–10% хуваарьтай нэмэгдүүлбэл, эрэлт тогтвортой тул орлого шууд өснө. Туршилтаар эхэл.`,
+    `📊 <b>Сар тутмын cohort анализ</b> — шинэ vs давтан харилцагчийн LTV-г мөрдөж, маркетинг ROI-г хэмжих системтэй болго.`,
+    `🎁 <b>Referral хөтөлбөр</b> — VIP харилцагчид тус бүр 1 шинэ хүн оруулвал ${money(seg.vip)} шинэ дээд чанарын lead гарна.`,
+  ].map(x=>`<li>${x}</li>`).join("");
+
+  /* ========== RISKS ========== */
+  document.getElementById("s-risks").innerHTML = [
+    `⚠ <b>Нэг үйлчилгээнд хэт тулгуурласан</b> — топ 3 = ${top3Share.toFixed(1)}%. Хэрэв тоног төхөөрөмж/тариа нийлүүлэлт тасалдвал орлого эрс унана.`,
+    `⚠ <b>Нэг ажилтанд хэт тулгуурласан</b> — ${topStaff?.name} ${topStaffShare.toFixed(0)}%. Өвдөх/явбал үйл ажиллагаа зогсоно. Backup заавал бэлд.`,
+    `⚠ <b>Харилцагчийн концентрацийн эрсдэл</b> — ТОП 10 = ${top10CustShare.toFixed(1)}% ХАРИЛЦАГЧИЙН орлого. Хамгийн том клиент гээх нь мэдэгдэхүйц цохилт.`,
+    `⚠ <b>Шинэ ирэгсдийн <b>${(seg.once/totalCustomers*100).toFixed(0)}%</b> нь буцдаггүй</b> — CX/follow-up процесст анхаар.`,
+    lowPerformers>0 ? `⚠ <b>${lowPerformers} үйлчилгээ "dead stock"</b> — багшийн цаг, mаркетинг зарцуулаад үр ашиггүй.` : `✅ Бага үр ашигтай үйлчилгээ харьцангуй бага.`,
+    refundRate>1 ? `⚠ Refund rate <b>${refundRate.toFixed(2)}%</b> — шалтгаан дүгнэх.` : `✅ Refund маш бага, чанарт итгэлтэй.`,
+  ].map(x=>`<li>${x}</li>`).join("");
+}
+
+async function salesBoot(){
+  const s = document.getElementById("s-status");
+  try{
+    setStatus(s,"Sales CSV файлуудыг fetch хийж байна…","st-warn");
+    const raw = await salesLoadFetch();
+    const d = salesProcess(raw); salesRender(d);
+    setStatus(s,`✅ ${Object.keys(raw).length} CSV амжилттай уншигдлаа (${d.items.length} үйлчилгээ · ${d.customers.length} харилцагч · ${d.staff.length} ажилтан)`,"st-ok");
+  }catch(e){
+    setStatus(s,"⚠️ Автоматаар уншиж чадсангүй (file:// хязгаарлалт). Дээрх 📁 товчоор sales фолдерын 3 CSV-г сонгоно уу.","st-warn");
+  }
+}
+document.getElementById("s-picker").addEventListener("change", async ev=>{
+  const s = document.getElementById("s-status");
+  const files = [...ev.target.files]; if(!files.length) return;
+  try{
+    setStatus(s,"Sales файл боловсруулж байна…","st-warn");
+    const raw = await salesLoadPicker(files);
+    const d = salesProcess(raw); salesRender(d);
+    setStatus(s,`✅ ${files.length} CSV амжилттай (${d.items.length} үйлчилгээ · ${d.customers.length} харилцагч · ${d.staff.length} ажилтан)`,"st-ok");
+  }catch(e){ setStatus(s,"❌ Алдаа: "+e.message,"st-bad"); }
+});
+
+/* Boot both */
+fbBoot();
+salesBoot();
+</script>
+</body>
+</html>

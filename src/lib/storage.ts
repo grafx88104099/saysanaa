@@ -6,6 +6,7 @@ const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 export const AVATARS_BUCKET = "avatars";
 export const CONTRACTS_BUCKET = "contracts";
 export const TASK_FILES_BUCKET = "task-files";
+export const PPT_IMAGES_BUCKET = "ppt-images";
 
 if (!URL || !KEY) {
   console.warn("SUPABASE_URL эсвэл SUPABASE_SERVICE_ROLE_KEY тохируулагдаагүй.");
@@ -85,6 +86,26 @@ export async function uploadTaskFile(
     .upload(path, buf, { contentType: file.type, upsert: false });
   if (error) throw new Error(error.message);
   const { data } = supabaseAdmin.storage.from(TASK_FILES_BUCKET).getPublicUrl(path);
+  return { url: data.publicUrl, size: file.size, name: fileName };
+}
+
+export async function uploadPptImage(
+  file: Blob,
+  fileName: string,
+  projectId: string,
+): Promise<{ url: string; size: number; name: string }> {
+  await ensureBucket(PPT_IMAGES_BUCKET, {
+    fileSizeLimit: 15 * 1024 * 1024,
+    allowedMimeTypes: ["image/png", "image/jpeg", "image/webp"],
+  });
+  const safe = fileName.replace(/[^\w.\-]/g, "_");
+  const path = `${projectId}/${Date.now()}-${safe}`;
+  const buf = Buffer.from(await file.arrayBuffer());
+  const { error } = await supabaseAdmin.storage
+    .from(PPT_IMAGES_BUCKET)
+    .upload(path, buf, { contentType: file.type, upsert: false });
+  if (error) throw new Error(error.message);
+  const { data } = supabaseAdmin.storage.from(PPT_IMAGES_BUCKET).getPublicUrl(path);
   return { url: data.publicUrl, size: file.size, name: fileName };
 }
 

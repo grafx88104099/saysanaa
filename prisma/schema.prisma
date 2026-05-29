@@ -137,6 +137,7 @@ model Project {
   timeEntries   TimeEntry[]
   kpiSnapshot   ProjectKpiSnapshot?
   financeEntries FinanceEntry[]
+  pptDeck       ProjectPptDeck?
   createdBy     String
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
@@ -368,6 +369,14 @@ enum FinanceKind {
   EXPENSE
 }
 
+enum PptSlotKind {
+  MOODBOARD   // дезайны санаа цуглуулга
+  PLAN        // floor plan / layout
+  SKETCH      // 3D скеч
+  RENDER      // 3D render — gallery
+  MATERIALS   // материалын зураг
+}
+
 model EmployeeKpiPeriod {
   id                String         @id @default(cuid())
   employeeId        String
@@ -494,6 +503,32 @@ model CompanyGoal {
 
   @@index([year, sortOrder])
   @@index([parentId])
+}
+
+model ProjectPptDeck {
+  id              String           @id @default(cuid())
+  projectId       String           @unique
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  briefText       String?          // Слайд 3 — Brief/Scope
+  materialsText   String?          // Слайд 8 — Materials & Specs
+  lastGeneratedAt DateTime?
+  slots           ProjectPptSlot[]
+  updatedAt       DateTime         @updatedAt
+}
+
+model ProjectPptSlot {
+  id         String          @id @default(cuid())
+  deckId     String
+  deck       ProjectPptDeck  @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  kind       PptSlotKind
+  ordinal    Int             @default(0)
+  imageUrl   String
+  imageName  String?
+  caption    String?
+  uploadedBy String
+  createdAt  DateTime        @default(now())
+
+  @@index([deckId, kind, ordinal])
 }
 
 model AuditLog {

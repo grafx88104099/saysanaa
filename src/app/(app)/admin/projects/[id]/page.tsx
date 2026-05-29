@@ -170,9 +170,18 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         </div>
         <ProgressRing value={p.progressPct} size={92} strokeWidth={8} color={ringColor} />
         {canEdit && (
-          <Link href={`/admin/projects/${p.id}/edit`} className="btn-ghost self-start">
-            Засах
-          </Link>
+          <div className="flex flex-col gap-2 self-start">
+            <Link href={`/admin/projects/${p.id}/edit`} className="btn-ghost">
+              Засах
+            </Link>
+            <Link
+              href={`/admin/projects/${p.id}/ppt`}
+              className="btn-ghost"
+              title="Презентэйшн үүсгэх"
+            >
+              🎯 Презентэйшн
+            </Link>
+          </div>
         )}
       </div>
 

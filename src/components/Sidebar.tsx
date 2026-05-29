@@ -115,6 +115,7 @@ const GROUPS: Group[] = [
   {
     title: "Байгууллага",
     items: [
+      { href: "/about", label: "Танилцуулга", icon: Icons.Book },
       { href: "/handbook", label: "Дүрэм журам", icon: Icons.Book },
       { href: "/goals", label: "Зорилго, зорилт", icon: Icons.Target },
     ],
@@ -152,7 +153,15 @@ const GROUPS: Group[] = [
   },
 ];
 
-export default function Sidebar({ role }: { role: Role }) {
+export default function Sidebar({
+  role,
+  orgName = "SAYSANAA",
+  orgLogoUrl = null,
+}: {
+  role: Role;
+  orgName?: string;
+  orgLogoUrl?: string | null;
+}) {
   const pathname = usePathname();
 
   return (
@@ -161,9 +170,19 @@ export default function Sidebar({ role }: { role: Role }) {
         <Link
           href="/dashboard"
           className="flex items-center justify-center w-full text-tx"
-          aria-label="SAYSANAA"
+          aria-label={orgName}
+          title={orgName}
         >
-          <Logo height={26} />
+          {orgLogoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={orgLogoUrl}
+              alt={orgName}
+              className="max-h-7 max-w-full object-contain"
+            />
+          ) : (
+            <Logo height={26} />
+          )}
         </Link>
       </div>
       <nav className="flex-1 py-3 space-y-4">

@@ -77,6 +77,7 @@ export async function GET(
     name: organization?.name ?? "SAYSANAA",
     tagline: organization?.tagline ?? null,
     website: organization?.website ?? null,
+    logoUrl: organization?.logoUrl ?? null,
   };
 
   const buffer = await buildPresentation(deckProject, deck, orgData);

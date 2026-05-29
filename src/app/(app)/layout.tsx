@@ -26,9 +26,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     photoUrl: user.employee.photoUrl,
   };
 
+  // Branding from Organization singleton — falls back to defaults if absent.
+  const org = await prisma.organization.findUnique({
+    where: { id: "main" },
+    select: { name: true, logoUrl: true },
+  });
+
   return (
     <div className="min-h-screen flex bg-bg text-tx">
-      <Sidebar role={user.employee.role} />
+      <Sidebar
+        role={user.employee.role}
+        orgName={org?.name ?? "SAYSANAA"}
+        orgLogoUrl={org?.logoUrl ?? null}
+      />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar me={me} />
         <main className="flex-1 overflow-y-auto p-5">{children}</main>

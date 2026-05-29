@@ -52,6 +52,7 @@ export type DeckOrg = {
   name: string;
   tagline: string | null;
   website: string | null;
+  logoUrl: string | null;
 };
 
 function fmtMoney(n: number | null): string {
@@ -331,8 +332,11 @@ function sectionTitle(slide: PptxGenJS.Slide, title: string, subtitle?: string) 
 export async function buildPresentation(
   project: DeckProject,
   deck: DeckData,
-  org: DeckOrg = { name: "SAYSANAA", tagline: null, website: null }
+  org: DeckOrg = { name: "SAYSANAA", tagline: null, website: null, logoUrl: null }
 ): Promise<Buffer> {
+  // Pre-fetch the org logo so the cover and final slide can embed it as an image.
+  // SSRF allowlist already restricts to https + supabase.co.
+  const logoData = org.logoUrl ? await fetchImageData(org.logoUrl) : null;
   const pres = new PptxGenJS();
   pres.layout = "LAYOUT_WIDE"; // 13.333 × 7.5"
   pres.title = `${project.code} — ${project.name}`;
@@ -364,21 +368,33 @@ export async function buildPresentation(
       fill: { color: BRAND2 },
       line: { color: BRAND2, width: 0 },
     });
-    s.addText(org.name, {
-      x: 0.6,
-      y: 0.5,
-      w: 5,
-      h: 0.4,
-      fontFace: FONT,
-      fontSize: 12,
-      color: BRAND,
-      bold: true,
-      charSpacing: 8,
-    });
+    if (logoData) {
+      // Real logo at the top-left, name in smaller type below it.
+      s.addImage({
+        data: logoData,
+        x: 0.6,
+        y: 0.45,
+        w: 1.6,
+        h: 0.6,
+        sizing: { type: "contain", w: 1.6, h: 0.6 },
+      });
+    } else {
+      s.addText(org.name, {
+        x: 0.6,
+        y: 0.5,
+        w: 5,
+        h: 0.4,
+        fontFace: FONT,
+        fontSize: 12,
+        color: BRAND,
+        bold: true,
+        charSpacing: 8,
+      });
+    }
     if (org.tagline) {
       s.addText(org.tagline, {
         x: 0.6,
-        y: 0.85,
+        y: logoData ? 1.1 : 0.85,
         w: 8,
         h: 0.3,
         fontFace: FONT,
@@ -630,6 +646,16 @@ export async function buildPresentation(
       fill: { color: BRAND2 },
       line: { color: BRAND2, width: 0 },
     });
+    if (logoData) {
+      s.addImage({
+        data: logoData,
+        x: W / 2 - 1.0,
+        y: 0.7,
+        w: 2.0,
+        h: 0.7,
+        sizing: { type: "contain", w: 2.0, h: 0.7 },
+      });
+    }
     s.addText("Баярлалаа", {
       x: 0.6,
       y: H * 0.35,

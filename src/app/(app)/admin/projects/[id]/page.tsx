@@ -14,6 +14,12 @@ import ContractCard from "@/components/projects/ContractCard";
 import StatusMenu from "./StatusMenu";
 import CloseModal from "./CloseModal";
 import { fmtDate, fmtMoney } from "@/lib/format";
+import { loadHolidayKeys } from "@/lib/calendar";
+import {
+  computeExpectedProgress,
+  STATUS_COLOR,
+  STATUS_LABEL,
+} from "@/lib/projectProgress";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -68,8 +74,26 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     orderBy: { sortOrder: "asc" },
     select: { id: true, key: true, label: true },
   });
+  const holidayKeys = await loadHolidayKeys();
 
   const canEdit = me.role === "ADMIN" || me.role === "PM";
+
+  const expected = computeExpectedProgress(
+    {
+      startDate: p.startDate,
+      endDate: p.endDate,
+      totalWorkDays: p.totalWorkDays,
+      totalHours: p.totalHours,
+      progressPct: p.progressPct,
+      phases: p.phases.map((ph) => ({
+        ordinal: ph.ordinal,
+        name: ph.name,
+        hours: ph.hours,
+        progressPct: ph.progressPct,
+      })),
+    },
+    holidayKeys
+  );
 
   // Aggregate time entries by phase + kind
   const phaseHoursMap = new Map<
@@ -162,6 +186,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         />
         <Stat label="Гэрээний үнэ" value={fmtMoney(cv)} />
       </div>
+
+      {p.status !== "DRAFT" && p.status !== "CANCELLED" && expected.daysTotal > 0 && (
+        <ExpectedProgressCard expected={expected} />
+      )}
 
       <div className="grid grid-cols-4 gap-px bg-white/8 border border-white/10 rounded-lg overflow-hidden mb-10">
         <Stat label="Нийт цаг" value={`${p.totalHours} ц`} />
@@ -362,6 +390,104 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
       </section>
+    </div>
+  );
+}
+
+function ExpectedProgressCard({
+  expected,
+}: {
+  expected: import("@/lib/projectProgress").ExpectedProgress;
+}) {
+  const statusColor = STATUS_COLOR[expected.status];
+  const statusLabel = STATUS_LABEL[expected.status];
+  const deltaSign = expected.delta > 0 ? "+" : "";
+  return (
+    <div className="mb-8 panel p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-[11px] uppercase tracking-[0.15em] text-sub font-medium">
+          Хуваарийн ахиц
+        </div>
+        <div
+          className="inline-flex items-center gap-2 text-[12px] font-semibold px-2.5 py-1 rounded"
+          style={{
+            color: statusColor,
+            background: `${statusColor}1A`,
+            border: `1px solid ${statusColor}40`,
+          }}
+        >
+          <span>{statusLabel}</span>
+          {expected.status !== "NOT_STARTED" && expected.status !== "COMPLETED" && (
+            <span className="tabular-nums">
+              {deltaSign}
+              {Math.abs(expected.delta)}%
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Dual progress bar */}
+      <div className="relative h-3 rounded-full bg-bd overflow-hidden mb-3">
+        {/* Expected = dashed indicator behind */}
+        <div
+          className="absolute inset-y-0 left-0 bg-white/15"
+          style={{ width: `${expected.expectedPct}%` }}
+          aria-label={`Хүлээгдэх ${expected.expectedPct}%`}
+        />
+        {/* Actual = solid colored bar in front */}
+        <div
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{
+            width: `${expected.actualPct}%`,
+            background: statusColor,
+          }}
+          aria-label={`Бодит ${expected.actualPct}%`}
+        />
+        {/* Today marker */}
+        <div
+          className="absolute inset-y-0 w-px bg-white"
+          style={{ left: `${expected.expectedPct}%` }}
+          title={`Өнөөдөр (${expected.expectedPct}%)`}
+        />
+      </div>
+
+      <div className="grid grid-cols-4 gap-3 text-[11px]">
+        <div className="border border-bd rounded-md px-3 py-2 bg-white/[0.02]">
+          <div className="text-sub uppercase tracking-wider mb-1">Бодит</div>
+          <div className="text-[15px] font-semibold tabular-nums">
+            {expected.actualPct}%
+          </div>
+        </div>
+        <div className="border border-bd rounded-md px-3 py-2 bg-white/[0.02]">
+          <div className="text-sub uppercase tracking-wider mb-1">Хүлээгдэх</div>
+          <div className="text-[15px] font-semibold tabular-nums">
+            {expected.expectedPct}%
+          </div>
+        </div>
+        <div className="border border-bd rounded-md px-3 py-2 bg-white/[0.02]">
+          <div className="text-sub uppercase tracking-wider mb-1">Өнгөрсөн өдөр</div>
+          <div className="text-[15px] font-semibold tabular-nums">
+            {expected.daysElapsed} / {expected.daysTotal}
+          </div>
+        </div>
+        <div className="border border-bd rounded-md px-3 py-2 bg-white/[0.02]">
+          <div className="text-sub uppercase tracking-wider mb-1">Үлдсэн</div>
+          <div className="text-[15px] font-semibold tabular-nums">
+            {expected.daysLeft} өдөр
+          </div>
+        </div>
+      </div>
+
+      {expected.currentPhase && (
+        <div className="mt-3 text-[12px] text-sub border-t border-bd pt-3 flex items-center gap-2">
+          <span className="text-white/70">📍 Өнөөдөр байх ёстой фаз:</span>
+          <span className="text-tx font-medium">
+            {String(expected.currentPhase.ordinal + 1).padStart(2, "0")}. {expected.currentPhase.name}
+          </span>
+          <span className="text-sub">·</span>
+          <span className="tabular-nums">{expected.currentPhase.phaseExpectedPct}%</span>
+        </div>
+      )}
     </div>
   );
 }

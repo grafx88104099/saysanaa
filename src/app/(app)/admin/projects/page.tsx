@@ -9,6 +9,9 @@ import {
 } from "@/lib/labels";
 import Select from "@/components/Select";
 import ProgressBar from "@/components/ProgressBar";
+import ScheduleBadge from "@/components/projects/ScheduleBadge";
+import { loadHolidayKeys } from "@/lib/calendar";
+import { computeExpectedProgress } from "@/lib/projectProgress";
 import type { ProjectStatus, ProjectType } from "@prisma/client";
 
 export default async function ProjectsListPage({
@@ -22,28 +25,31 @@ export default async function ProjectsListPage({
   const status = sp.status && sp.status !== "all" ? (sp.status as ProjectStatus) : undefined;
   const minPriority = sp.priority ? parseInt(sp.priority, 10) : undefined;
 
-  const projects = await prisma.project.findMany({
-    where: {
-      AND: [
-        q
-          ? {
-              OR: [
-                { code: { contains: q, mode: "insensitive" } },
-                { name: { contains: q, mode: "insensitive" } },
-                { clientName: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {},
-        type ? { type } : {},
-        status ? { status } : {},
-        minPriority ? { priority: { gte: minPriority } } : {},
-      ],
-    },
-    include: {
-      assignments: { include: { employee: true } },
-    },
-    orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-  });
+  const [projects, holidayKeys] = await Promise.all([
+    prisma.project.findMany({
+      where: {
+        AND: [
+          q
+            ? {
+                OR: [
+                  { code: { contains: q, mode: "insensitive" } },
+                  { name: { contains: q, mode: "insensitive" } },
+                  { clientName: { contains: q, mode: "insensitive" } },
+                ],
+              }
+            : {},
+          type ? { type } : {},
+          status ? { status } : {},
+          minPriority ? { priority: { gte: minPriority } } : {},
+        ],
+      },
+      include: {
+        assignments: { include: { employee: true } },
+      },
+      orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+    }),
+    loadHolidayKeys(),
+  ]);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -117,13 +123,24 @@ export default async function ProjectsListPage({
         )}
         {projects.map((p) => {
           const acc = priorityAccent(p.priority);
+          const expected = computeExpectedProgress(
+            {
+              startDate: p.startDate,
+              endDate: p.endDate,
+              totalWorkDays: p.totalWorkDays,
+              totalHours: p.totalHours,
+              progressPct: p.progressPct,
+              phases: [],
+            },
+            holidayKeys
+          );
           return (
             <Link
               key={p.id}
               href={`/admin/projects/${p.id}`}
               className="grid grid-cols-[120px_2fr_160px_1fr_160px_1.4fr_1fr] items-center px-4 py-3 border-b border-white/[0.06] last:border-b-0 hover:bg-white/[0.02] transition"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span
                   className="text-[10px] font-bold px-1.5 py-0.5 rounded"
                   style={{ background: acc.color, color: "#0B0D10" }}
@@ -132,6 +149,7 @@ export default async function ProjectsListPage({
                   P{p.priority}
                 </span>
                 <span className="text-[12px] font-mono text-white/80">{p.code}</span>
+                <ScheduleBadge expected={expected} size="xs" />
               </div>
               <div className="min-w-0">
                 <div className="font-medium truncate">{p.name}</div>

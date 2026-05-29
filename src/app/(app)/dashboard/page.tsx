@@ -7,12 +7,16 @@ import {
   priorityAccent,
 } from "@/lib/labels";
 import ProgressBar from "@/components/ProgressBar";
+import ScheduleBadge from "@/components/projects/ScheduleBadge";
+import { loadHolidayKeys } from "@/lib/calendar";
+import { computeExpectedProgress } from "@/lib/projectProgress";
 
 export default async function Dashboard() {
   const s = await readSession();
   const me = s ? await prisma.employee.findUnique({ where: { userId: s.uid } }) : null;
   const isManager = s?.role === "ADMIN" || s?.role === "PM";
 
+  const holidayKeys = await loadHolidayKeys();
   const [employees, active, activeProjects, myActiveProjects, recentMine] = await Promise.all([
     prisma.employee.count(),
     prisma.employee.count({ where: { active: true } }),
@@ -72,6 +76,17 @@ export default async function Dashboard() {
             <div className="space-y-2">
               {recentMine.map((p) => {
                 const acc = priorityAccent(p.priority);
+                const expected = computeExpectedProgress(
+                  {
+                    startDate: p.startDate,
+                    endDate: p.endDate,
+                    totalWorkDays: p.totalWorkDays,
+                    totalHours: p.totalHours,
+                    progressPct: p.progressPct,
+                    phases: [],
+                  },
+                  holidayKeys
+                );
                 return (
                   <Link
                     key={p.id}
@@ -89,6 +104,7 @@ export default async function Dashboard() {
                       <span className="text-[11px] text-white/45 ml-1">
                         {PROJECT_TYPE_LABEL[p.type]}
                       </span>
+                      <ScheduleBadge expected={expected} size="xs" />
                       <span className="ml-auto text-[10px] text-white/45">
                         {PROJECT_STATUS_LABEL[p.status]}
                       </span>

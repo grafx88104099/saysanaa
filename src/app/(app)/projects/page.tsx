@@ -8,6 +8,9 @@ import {
   priorityAccent,
 } from "@/lib/labels";
 import ProgressBar from "@/components/ProgressBar";
+import ScheduleBadge from "@/components/projects/ScheduleBadge";
+import { loadHolidayKeys } from "@/lib/calendar";
+import { computeExpectedProgress } from "@/lib/projectProgress";
 
 export default async function MyProjectsPage() {
   const s = await readSession();
@@ -18,16 +21,17 @@ export default async function MyProjectsPage() {
 
   // ADMIN/PM-д бүх төсөл, бусдад зөвхөн өөртэй холбоотой
   const isManager = s.role === "ADMIN" || s.role === "PM";
-  const projects = await prisma.project.findMany({
-    where: isManager
-      ? {}
-      : { assignments: { some: { employeeId: me.id } } },
-    include: {
-      assignments: { include: { employee: true } },
-      phases: { orderBy: { ordinal: "asc" } },
-    },
-    orderBy: [{ status: "asc" }, { priority: "desc" }, { createdAt: "desc" }],
-  });
+  const [projects, holidayKeys] = await Promise.all([
+    prisma.project.findMany({
+      where: isManager ? {} : { assignments: { some: { employeeId: me.id } } },
+      include: {
+        assignments: { include: { employee: true } },
+        phases: { orderBy: { ordinal: "asc" } },
+      },
+      orderBy: [{ status: "asc" }, { priority: "desc" }, { createdAt: "desc" }],
+    }),
+    loadHolidayKeys(),
+  ]);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -51,6 +55,22 @@ export default async function MyProjectsPage() {
           {projects.map((p) => {
             const acc = priorityAccent(p.priority);
             const currentPhase = p.phases.find((ph) => ph.progressPct < 100);
+            const expected = computeExpectedProgress(
+              {
+                startDate: p.startDate,
+                endDate: p.endDate,
+                totalWorkDays: p.totalWorkDays,
+                totalHours: p.totalHours,
+                progressPct: p.progressPct,
+                phases: p.phases.map((ph) => ({
+                  ordinal: ph.ordinal,
+                  name: ph.name,
+                  hours: ph.hours,
+                  progressPct: ph.progressPct,
+                })),
+              },
+              holidayKeys
+            );
             return (
               <Link
                 key={p.id}
@@ -65,6 +85,7 @@ export default async function MyProjectsPage() {
                     P{p.priority}
                   </span>
                   <span className="text-[11px] font-mono text-white/55">{p.code}</span>
+                  <ScheduleBadge expected={expected} size="xs" />
                   <span className="ml-auto text-[10px] text-white/45">
                     {PROJECT_TYPE_LABEL[p.type]}
                   </span>

@@ -11,7 +11,8 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed-kpi": "tsx prisma/seed-kpi.ts"
+    "db:seed-kpi": "tsx prisma/seed-kpi.ts",
+    "db:seed-finance": "tsx prisma/seed-finance.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

@@ -136,6 +136,7 @@ model Project {
   assignments   ProjectAssignment[]
   timeEntries   TimeEntry[]
   kpiSnapshot   ProjectKpiSnapshot?
+  financeEntries FinanceEntry[]
   createdBy     String
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
@@ -362,6 +363,11 @@ enum LeaveStatus {
   CANCELLED
 }
 
+enum FinanceKind {
+  INCOME
+  EXPENSE
+}
+
 model EmployeeKpiPeriod {
   id                String         @id @default(cuid())
   employeeId        String
@@ -426,6 +432,68 @@ model LeaveRequest {
 
   @@index([employeeId, status])
   @@index([fromDate, toDate])
+}
+
+model HandbookSection {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  body      String   // markdown
+  sortOrder Int      @default(0)
+  updatedBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+model FinanceCategory {
+  id        String        @id @default(cuid())
+  name      String
+  kind      FinanceKind
+  sortOrder Int           @default(0)
+  entries   FinanceEntry[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@unique([name, kind])
+  @@index([kind, sortOrder])
+}
+
+model FinanceEntry {
+  id         String          @id @default(cuid())
+  date       DateTime        @db.Date
+  categoryId String
+  category   FinanceCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  amount     Decimal         @db.Decimal(14, 2)
+  projectId  String?
+  project    Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  note       String?
+  createdBy  String
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([date])
+  @@index([categoryId])
+  @@index([projectId])
+}
+
+model CompanyGoal {
+  id        String        @id @default(cuid())
+  year      Int
+  title     String
+  body      String?       // markdown
+  parentId  String?
+  parent    CompanyGoal?  @relation("GoalTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children  CompanyGoal[] @relation("GoalTree")
+  progress  Int           @default(0) // 0-100
+  sortOrder Int           @default(0)
+  createdBy String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([year, sortOrder])
+  @@index([parentId])
 }
 
 model AuditLog {

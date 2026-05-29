@@ -74,6 +74,32 @@ const Icons = {
       <polyline points="12 6 12 12 16 14" />
     </svg>
   ),
+  Book: (
+    <svg {...ICON_PROPS}>
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+  ),
+  Target: (
+    <svg {...ICON_PROPS}>
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
+  ),
+  Chart: (
+    <svg {...ICON_PROPS}>
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  ),
+  Coin: (
+    <svg {...ICON_PROPS}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v12M9 9.5c0-1 .8-1.5 3-1.5s3 1 3 2-1 1.5-3 1.5-3 .5-3 1.5 1 2 3 2 3-.5 3-1.5" />
+    </svg>
+  ),
 };
 
 const GROUPS: Group[] = [
@@ -87,14 +113,29 @@ const GROUPS: Group[] = [
     ],
   },
   {
+    title: "Байгууллага",
+    items: [
+      { href: "/handbook", label: "Дүрэм журам", icon: Icons.Book },
+      { href: "/goals", label: "Зорилго, зорилт", icon: Icons.Target },
+    ],
+  },
+  {
     title: "Удирдлага",
     roles: ["ADMIN", "PM"],
     items: [
       { href: "/admin/projects", label: "Төсөл", icon: Icons.Kanban },
       { href: "/admin/employees", label: "Ажилтан", icon: Icons.Users },
       { href: "/admin/attendance", label: "Багийн ирц", icon: Icons.Calendar },
+      { href: "/admin/insights", label: "Статистик", icon: Icons.Chart },
       { href: "/admin/holidays", label: "Амралтын өдөр", icon: Icons.Calendar, roles: ["ADMIN"] },
       { href: "/admin/display", label: "Дэлгэц", icon: Icons.Monitor, roles: ["ADMIN"] },
+    ],
+  },
+  {
+    title: "Санхүү",
+    roles: ["ADMIN", "ACCOUNTANT"],
+    items: [
+      { href: "/admin/finance", label: "Орлого / Зарлага", icon: Icons.Coin },
     ],
   },
   {

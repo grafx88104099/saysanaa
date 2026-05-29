@@ -48,6 +48,12 @@ export type DeckData = {
   slots: DeckSlot[];
 };
 
+export type DeckOrg = {
+  name: string;
+  tagline: string | null;
+  website: string | null;
+};
+
 function fmtMoney(n: number | null): string {
   if (n == null) return "—";
   if (n === 0) return "0 ₮";
@@ -324,15 +330,16 @@ function sectionTitle(slide: PptxGenJS.Slide, title: string, subtitle?: string) 
 
 export async function buildPresentation(
   project: DeckProject,
-  deck: DeckData
+  deck: DeckData,
+  org: DeckOrg = { name: "SAYSANAA", tagline: null, website: null }
 ): Promise<Buffer> {
   const pres = new PptxGenJS();
   pres.layout = "LAYOUT_WIDE"; // 13.333 × 7.5"
   pres.title = `${project.code} — ${project.name}`;
-  pres.subject = "SAYSANAA";
-  pres.author = "SAYSANAA OS";
+  pres.subject = org.name;
+  pres.author = `${org.name} OS`;
 
-  const footerLabel = `SAYSANAA · ${project.code} · ${project.name}`;
+  const footerLabel = `${org.name} · ${project.code} · ${project.name}`;
   const slotsByKind = (k: DeckSlot["kind"]) =>
     deck.slots.filter((s) => s.kind === k).sort((a, b) => a.ordinal - b.ordinal);
 
@@ -357,7 +364,7 @@ export async function buildPresentation(
       fill: { color: BRAND2 },
       line: { color: BRAND2, width: 0 },
     });
-    s.addText("SAYSANAA", {
+    s.addText(org.name, {
       x: 0.6,
       y: 0.5,
       w: 5,
@@ -368,6 +375,18 @@ export async function buildPresentation(
       bold: true,
       charSpacing: 8,
     });
+    if (org.tagline) {
+      s.addText(org.tagline, {
+        x: 0.6,
+        y: 0.85,
+        w: 8,
+        h: 0.3,
+        fontFace: FONT,
+        fontSize: 10,
+        color: SUB,
+        italic: true,
+      });
+    }
     s.addText(project.name, {
       x: 0.6,
       y: H * 0.3,
@@ -630,7 +649,11 @@ export async function buildPresentation(
       fontSize: 14,
       color: BRAND,
     });
-    s.addText("SAYSANAA · artify", {
+    s.addText(
+      org.website
+        ? `${org.name} · ${org.website.replace(/^https?:\/\//, "")}`
+        : org.name,
+      {
       x: 0.6,
       y: H * 0.78,
       w: W - 1.2,
@@ -639,7 +662,8 @@ export async function buildPresentation(
       fontSize: 11,
       color: SUB,
       charSpacing: 4,
-    });
+    }
+    );
   }
 
   // pptxgenjs returns Buffer in Node when type: "nodebuffer"

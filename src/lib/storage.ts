@@ -7,6 +7,7 @@ export const AVATARS_BUCKET = "avatars";
 export const CONTRACTS_BUCKET = "contracts";
 export const TASK_FILES_BUCKET = "task-files";
 export const PPT_IMAGES_BUCKET = "ppt-images";
+export const ORG_ASSETS_BUCKET = "org-assets";
 
 if (!URL || !KEY) {
   console.warn("SUPABASE_URL эсвэл SUPABASE_SERVICE_ROLE_KEY тохируулагдаагүй.");
@@ -135,6 +136,31 @@ export async function uploadTaskFile(
 }
 
 void objectPathFromUrl; // exported helper kept for future migration to /api/files proxy
+
+/**
+ * Upload an organization brand asset (logo, light-logo, etc.).
+ * Public-read with random-slug path. Used by /admin/organization.
+ */
+export async function uploadOrgAsset(
+  file: Blob,
+  fileName: string,
+  kind: "logo" | "logo-light"
+): Promise<{ url: string; path: string }> {
+  await ensureBucket(ORG_ASSETS_BUCKET, {
+    fileSizeLimit: 8 * 1024 * 1024,
+    allowedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/svg+xml"],
+    isPublic: true,
+  });
+  const safe = fileName.replace(/[^\w.\-]/g, "_");
+  const path = `${kind}-${randomSlug()}-${safe}`;
+  const buf = Buffer.from(await file.arrayBuffer());
+  const { error } = await supabaseAdmin.storage
+    .from(ORG_ASSETS_BUCKET)
+    .upload(path, buf, { contentType: file.type, upsert: false });
+  if (error) throw new Error(error.message);
+  const { data } = supabaseAdmin.storage.from(ORG_ASSETS_BUCKET).getPublicUrl(path);
+  return { url: data.publicUrl, path };
+}
 
 export async function uploadPptImage(
   file: Blob,

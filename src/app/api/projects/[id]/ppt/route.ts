@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { readSession } from "@/lib/session";
-import { buildPresentation, type DeckProject } from "@/lib/pptx";
+import { buildPresentation, type DeckProject, type DeckOrg } from "@/lib/pptx";
 
 export async function GET(
   _req: Request,
@@ -71,7 +71,15 @@ export async function GET(
       }
     : { briefText: null, materialsText: null, slots: [] };
 
-  const buffer = await buildPresentation(deckProject, deck);
+  // Load org branding for cover slide
+  const organization = await prisma.organization.findUnique({ where: { id: "main" } });
+  const orgData: DeckOrg = {
+    name: organization?.name ?? "SAYSANAA",
+    tagline: organization?.tagline ?? null,
+    website: organization?.website ?? null,
+  };
+
+  const buffer = await buildPresentation(deckProject, deck, orgData);
 
   // Update lastGeneratedAt
   if (project.pptDeck) {

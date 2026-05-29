@@ -127,6 +127,7 @@ const GROUPS: Group[] = [
       { href: "/admin/employees", label: "Ажилтан", icon: Icons.Users },
       { href: "/admin/attendance", label: "Багийн ирц", icon: Icons.Calendar },
       { href: "/admin/insights", label: "Статистик", icon: Icons.Chart },
+      { href: "/admin/organization", label: "Байгууллага", icon: Icons.Book, roles: ["ADMIN"] },
       { href: "/admin/holidays", label: "Амралтын өдөр", icon: Icons.Calendar, roles: ["ADMIN"] },
       { href: "/admin/display", label: "Дэлгэц", icon: Icons.Monitor, roles: ["ADMIN"] },
     ],

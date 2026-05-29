@@ -90,6 +90,8 @@ model Employee {
   taskComments   TaskComment[]       @relation("TaskCommenter")
   timeEntries    TimeEntry[]
   kpiPeriods     EmployeeKpiPeriod[]
+  attendance     Attendance[]
+  leaveRequests  LeaveRequest[]
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 }
@@ -333,6 +335,33 @@ enum KpiPeriodType {
   YEAR
 }
 
+enum AttendanceStatus {
+  PRESENT     // ирсэн
+  LATE        // хоцорсон
+  ABSENT      // ирээгүй (тайлбаргүй)
+  SICK        // өвчтэй
+  LEAVE       // чөлөө (зөвшөөрөгдсөн)
+  REMOTE      // зайнаас ажилласан
+  HOLIDAY     // нийтийн амралт
+}
+
+enum LeaveType {
+  VACATION
+  SICK
+  UNPAID
+  COMP
+  MATERNITY
+  BEREAVEMENT
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 model EmployeeKpiPeriod {
   id                String         @id @default(cuid())
   employeeId        String
@@ -359,6 +388,44 @@ model EmployeeKpiPeriod {
   @@unique([employeeId, periodType, periodKey])
   @@index([periodType, periodKey])
   @@index([employeeId])
+}
+
+model Attendance {
+  id          String           @id @default(cuid())
+  employeeId  String
+  employee    Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date        DateTime         @db.Date
+  checkInAt   DateTime?
+  checkOutAt  DateTime?
+  status      AttendanceStatus @default(PRESENT)
+  hoursWorked Float?           // auto-computed from check in/out (optional)
+  note        String?
+  createdBy   String           // user.id who recorded
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([employeeId, date])
+  @@index([date])
+  @@index([employeeId, date])
+}
+
+model LeaveRequest {
+  id          String        @id @default(cuid())
+  employeeId  String
+  employee    Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  fromDate    DateTime      @db.Date
+  toDate      DateTime      @db.Date
+  type        LeaveType
+  reason      String?
+  status      LeaveStatus   @default(PENDING)
+  approvedBy  String?       // user.id
+  approvedAt  DateTime?
+  rejectedReason String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([employeeId, status])
+  @@index([fromDate, toDate])
 }
 
 model AuditLog {

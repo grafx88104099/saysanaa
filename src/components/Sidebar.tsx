@@ -81,7 +81,8 @@ const GROUPS: Group[] = [
     items: [
       { href: "/dashboard", label: "Хяналт", icon: Icons.Dashboard },
       { href: "/projects", label: "Миний төсөл", icon: Icons.Folder },
-      { href: "/time", label: "Цагийн бүртгэл", icon: Icons.Clock },
+      { href: "/time", label: "Төслийн цаг", icon: Icons.Clock },
+      { href: "/me/attendance", label: "Ирц", icon: Icons.Calendar },
       { href: "/me/kpi", label: "Миний KPI", icon: Icons.Gauge },
     ],
   },
@@ -91,6 +92,7 @@ const GROUPS: Group[] = [
     items: [
       { href: "/admin/projects", label: "Төсөл", icon: Icons.Kanban },
       { href: "/admin/employees", label: "Ажилтан", icon: Icons.Users },
+      { href: "/admin/attendance", label: "Багийн ирц", icon: Icons.Calendar },
       { href: "/admin/holidays", label: "Амралтын өдөр", icon: Icons.Calendar, roles: ["ADMIN"] },
       { href: "/admin/display", label: "Дэлгэц", icon: Icons.Monitor, roles: ["ADMIN"] },
     ],

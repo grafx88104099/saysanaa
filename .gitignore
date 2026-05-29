@@ -16,3 +16,6 @@ next-env.d.ts
 
 # Claude Code local config
 .claude/
+
+# Client feedback docs (binary, local only)
+/засварын коммент/

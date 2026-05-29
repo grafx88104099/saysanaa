@@ -69,6 +69,31 @@ function calcEndDateClient(
   return { end: cursor, workDays: needed };
 }
 
+/** Count working days between two dates (inclusive of both), client-side. */
+function calcWorkDaysClient(
+  startStr: string,
+  endStr: string,
+  holidaySet: Set<string>,
+): number {
+  if (!startStr || !endStr) return 0;
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  if (isNaN(+start) || isNaN(+end)) return 0;
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  if (end < start) return 0;
+  const cursor = new Date(start);
+  let count = 0;
+  let guard = 0;
+  const isWork = (d: Date) => !isWeekend(d) && !holidaySet.has(dateKey(d));
+  while (cursor <= end && guard < 5000) {
+    if (isWork(cursor)) count++;
+    cursor.setDate(cursor.getDate() + 1);
+    guard++;
+  }
+  return count;
+}
+
 function SubmitBtn({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
@@ -251,11 +276,18 @@ export default function ProjectForm({
     );
   }
 
-  const totalHours = phases.reduce((s, p) => s + p.hours, 0);
-  const calc = calcEndDateClient(startDate, totalHours, holidaySet);
+  const isBuild = type === "BUILD";
+  // For BUILD: endDate is user-entered, totalDays/totalHours derived from working-days between dates.
+  // For DESIGN: phase hours → endDate auto (existing behavior).
+  const phaseSumHours = phases.reduce((s, p) => s + p.hours, 0);
+  const calc = !isBuild ? calcEndDateClient(startDate, phaseSumHours, holidaySet) : null;
   const autoEnd = calc ? fmtDate(calc.end) : "";
-  const effectiveEnd = endDateOverride || autoEnd;
-  const workDays = calc?.workDays ?? 0;
+  const effectiveEnd = isBuild ? endDateOverride : endDateOverride || autoEnd;
+  const buildWorkDays = isBuild
+    ? calcWorkDaysClient(startDate, effectiveEnd, holidaySet)
+    : 0;
+  const workDays = isBuild ? buildWorkDays : calc?.workDays ?? 0;
+  const totalHours = isBuild ? buildWorkDays * HOURS_PER_DAY : phaseSumHours;
   const contractNum = parseFloat(contractValue.replace(/[^\d.]/g, "")) || 0;
 
   return (
@@ -371,13 +403,19 @@ export default function ProjectForm({
               {startDate && WD_SHORT[new Date(startDate).getDay()]} · ажлын өдөр
             </div>
           </Field>
-          <Field label="Дуусах огноо" hint="auto">
+          <Field
+            label="Дуусах огноо"
+            required={isBuild}
+            hint={isBuild ? "гар оруулга" : "auto"}
+          >
             <input
               name="endDate"
               type="date"
               value={effectiveEnd}
               onChange={(e) => setEndDateOverride(e.target.value)}
               className="input [color-scheme:dark] text-white/80"
+              required={isBuild}
+              min={startDate}
             />
             <div className="text-[11px] text-white/45 mt-1">
               {effectiveEnd &&
@@ -431,16 +469,21 @@ export default function ProjectForm({
         </Row>
         <div className="grid grid-cols-3 gap-2 mt-2">
           <Pill label="Нийт ажлын өдөр" value={`${workDays} өдөр`} />
-          <Pill label="Нийт цаг" value={`${totalHours} цаг`} />
+          <Pill
+            label={isBuild ? "Тооцоолсон цаг" : "Нийт цаг"}
+            value={isBuild ? `${workDays * HOURS_PER_DAY} ц (8ц/өдөр)` : `${totalHours} цаг`}
+          />
           <Pill label="Гэрээний үнэ" value={contractNum > 0 ? fmtMoney(contractNum) : "—"} />
         </div>
       </Section>
 
-      {/* Section 04: Phase hours */}
+      {/* Section 04: Phase hours / days */}
       <Section
-        title={`04 — ${phases.length} шатны тооцоолсон цаг`}
+        title={`04 — ${phases.length} шатны ${isBuild ? "ажлын өдөр" : "тооцоолсон цаг"}`}
         hint={
-          isDesign && matchedBand && phasesDirtyRef.current
+          isBuild
+            ? "дуусах огнооноос хамаарахгүй — лавлагаа"
+            : isDesign && matchedBand && phasesDirtyRef.current
             ? "өөрчилсөн — KPI норм руу буцаах товч доор"
             : "оруулмагц дуусах огноо автомат"
         }
@@ -458,18 +501,22 @@ export default function ProjectForm({
               <input
                 type="number"
                 min="0"
-                step="1"
+                step={isBuild ? "0.5" : "1"}
                 name={`phaseHours[${p.ordinal}]`}
-                value={p.hours}
-                onChange={(e) => setPhaseHours(p.ordinal, parseInt(e.target.value, 10) || 0)}
+                value={isBuild ? (p.hours / HOURS_PER_DAY).toString() : p.hours}
+                onChange={(e) => {
+                  const raw = parseFloat(e.target.value) || 0;
+                  const stored = isBuild ? Math.round(raw * HOURS_PER_DAY) : Math.round(raw);
+                  setPhaseHours(p.ordinal, stored);
+                }}
                 className="w-20 h-9 bg-transparent border border-bd rounded px-2 text-[13px] tabular-nums text-right focus:outline-none focus:border-brand [&::-webkit-inner-spin-button]:appearance-none"
               />
-              {p.normHours != null && p.normHours !== p.hours && (
+              {!isBuild && p.normHours != null && p.normHours !== p.hours && (
                 <span className="text-[10px] text-sub tabular-nums" title="Норм цаг">
                   /{p.normHours}
                 </span>
               )}
-              <span className="text-[11px] text-sub">ц</span>
+              <span className="text-[11px] text-sub">{isBuild ? "өдөр" : "ц"}</span>
               {p.normHours != null && (
                 <input
                   type="hidden"
@@ -493,9 +540,13 @@ export default function ProjectForm({
           ))}
         </div>
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
-          <div className="text-[12px] text-white/55">Нийт тооцолсон цаг</div>
+          <div className="text-[12px] text-white/55">
+            {isBuild ? "Календарийн ажлын өдөр" : "Нийт тооцолсон цаг"}
+          </div>
           <div className="text-[14px] font-semibold tabular-nums">
-            {totalHours} цаг · {workDays} ажлын өдөр
+            {isBuild
+              ? `${workDays} ажлын өдөр (${totalHours} ц)`
+              : `${totalHours} цаг · ${workDays} ажлын өдөр`}
           </div>
         </div>
         <div className="mt-3 flex items-center gap-2 text-[12px] text-white/55 border border-white/10 rounded-md px-3 py-2">

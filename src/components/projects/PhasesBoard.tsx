@@ -44,6 +44,7 @@ type TaskFull = TaskListItem & {
 
 export default function PhasesBoard({
   projectId,
+  projectType,
   phases,
   tasks,
   assignees,
@@ -52,6 +53,7 @@ export default function PhasesBoard({
   myEmpId,
 }: {
   projectId: string;
+  projectType?: "DESIGN" | "BUILD";
   phases: Phase[];
   tasks: TaskFull[];
   assignees: EmpOption[];
@@ -59,6 +61,7 @@ export default function PhasesBoard({
   canChangeStatus: boolean;
   myEmpId: string | null;
 }) {
+  const unit: "HOURS" | "DAYS" = projectType === "BUILD" ? "DAYS" : "HOURS";
   const [view, setView] = useState<"list" | "kanban">("list");
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
@@ -134,7 +137,7 @@ export default function PhasesBoard({
             <div></div>
             <div></div>
             <div>Фаз</div>
-            <div>Цаг</div>
+            <div>{unit === "DAYS" ? "Өдөр" : "Цаг"}</div>
             <div className="text-right">Task</div>
             <div>Гүйцэтгэл</div>
             <div className="text-right">Хяналт</div>
@@ -144,6 +147,7 @@ export default function PhasesBoard({
               key={p.id}
               projectId={projectId}
               phase={p}
+              unit={unit}
               tasks={tasksByPhase.get(p.id) ?? []}
               assignees={assignees}
               canManage={canManage}

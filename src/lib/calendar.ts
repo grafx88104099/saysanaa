@@ -64,6 +64,30 @@ export function calcWorkDays(totalHours: number): number {
   return Math.ceil(totalHours / HOURS_PER_DAY);
 }
 
+/**
+ * Эхлэх ба дуусах огнооны хооронд ажлын өдрийн тоог буцаана (хоёулангаар нь оруулна).
+ */
+export function calcWorkDaysBetween(
+  startDate: Date,
+  endDate: Date,
+  holidayKeys: Set<string>,
+): number {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  if (end < start) return 0;
+  let count = 0;
+  let safety = 0;
+  const cursor = new Date(start);
+  while (cursor <= end && safety < WORK_DAY_SAFETY_LIMIT) {
+    if (isWorkDay(cursor, holidayKeys)) count++;
+    cursor.setDate(cursor.getDate() + 1);
+    safety++;
+  }
+  return count;
+}
+
 // In-memory cache (60 min TTL). Holidays нь маш ховор өөрчлөгддөг тул RAM-д хадгалах нь зүйтэй.
 let HOLIDAY_CACHE: { ts: number; keys: Set<string> } | null = null;
 const HOLIDAY_TTL_MS = 60 * 60 * 1000;

@@ -239,6 +239,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <section className="mb-10">
         <PhasesBoard
           projectId={p.id}
+          projectType={p.type}
           phases={p.phases.map((ph) => ({
             id: ph.id,
             ordinal: ph.ordinal,

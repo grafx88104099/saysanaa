@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/db";
 import { requireRole, requireUser } from "@/lib/session";
 import { audit } from "@/lib/audit";
-import { calcEndDate, loadHolidayKeys } from "@/lib/calendar";
+import { calcEndDate, calcWorkDaysBetween, loadHolidayKeys } from "@/lib/calendar";
 import {
   createProjectWithUniqueCode,
   generateProjectCode,
@@ -165,7 +165,10 @@ export async function createProjectAction(
   if (!usingKpi && phaseInput.length !== template.length) {
     return { error: "Фазын мэдээлэл бүрэн биш байна" };
   }
-  const totalHours = phases.reduce((s, p) => s + p.hours, 0);
+  const isBuild = d.type === "BUILD";
+  if (isBuild && !d.endDate) {
+    return { error: "Засал гүйцэтгэлийн төсөлд дуусах огноо заавал оруулна уу" };
+  }
   const expectedHours = phases.reduce((s, p) => s + (p.normHours || 0), 0);
 
   const { ids: assigneeIds, lead } = readAssignments(formData);
@@ -178,9 +181,23 @@ export async function createProjectAction(
 
   const holidayKeys = await loadHolidayKeys();
   const startDate = new Date(d.startDate);
-  const endDate = d.endDate
-    ? new Date(d.endDate)
-    : calcEndDate(startDate, totalHours, holidayKeys);
+  // Compute total hours/days:
+  //   DESIGN — sum of phase hours; endDate auto-derived if absent.
+  //   BUILD  — workdays(start, end) × 8; endDate is required user input.
+  let totalHours: number;
+  let endDate: Date | null;
+  let totalWorkDays: number;
+  if (isBuild) {
+    endDate = new Date(d.endDate!);
+    totalWorkDays = calcWorkDaysBetween(startDate, endDate, holidayKeys);
+    totalHours = totalWorkDays * 8;
+  } else {
+    totalHours = phases.reduce((s, p) => s + p.hours, 0);
+    endDate = d.endDate
+      ? new Date(d.endDate)
+      : calcEndDate(startDate, totalHours, holidayKeys);
+    totalWorkDays = Math.ceil(totalHours / 8);
+  }
 
   // Snapshot criterion labels for grading history (defends against criterion rename/delete)
   let gradeScoreData: { criterionId: string; criterionLabel: string; score: number }[] = [];
@@ -214,7 +231,7 @@ export async function createProjectAction(
         startDate,
         endDate,
         totalHours,
-        totalWorkDays: Math.ceil(totalHours / 8),
+        totalWorkDays,
         notes: d.notes || null,
         createdBy: me.uid,
         areaBandId: isDesign ? areaBandId : null,
@@ -304,6 +321,10 @@ export async function updateProjectAction(
         };
       });
 
+  const isBuild = d.type === "BUILD";
+  if (isBuild && !d.endDate) {
+    return { error: "Засал гүйцэтгэлийн төсөлд дуусах огноо заавал оруулна уу" };
+  }
   const expectedHours = phases.reduce((s, p) => s + (p.normHours || 0), 0);
   const { ids: assigneeIds, lead } = readAssignments(formData);
 
@@ -311,6 +332,22 @@ export async function updateProjectAction(
   const areaBandId = String(formData.get("areaBandId") || "").trim() || null;
   const gradeLevelId = String(formData.get("gradeLevelId") || "").trim() || null;
   const gradeScores = readGradeScores(formData);
+
+  // Recompute total hours/days. BUILD: derived from dates. DESIGN: phase-sum.
+  const startDateD = new Date(d.startDate);
+  let editTotalHours: number;
+  let editTotalWorkDays: number;
+  let editEndDate: Date | null;
+  if (isBuild) {
+    const holidayKeys = await loadHolidayKeys();
+    editEndDate = new Date(d.endDate!);
+    editTotalWorkDays = calcWorkDaysBetween(startDateD, editEndDate, holidayKeys);
+    editTotalHours = editTotalWorkDays * 8;
+  } else {
+    editTotalHours = phases.reduce((s, p) => s + p.hours, 0);
+    editEndDate = d.endDate ? new Date(d.endDate) : null;
+    editTotalWorkDays = Math.ceil(editTotalHours / 8);
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.project.update({
@@ -325,8 +362,10 @@ export async function updateProjectAction(
         priority: d.priority,
         areaM2: d.areaM2 ?? null,
         contractValue: d.contractValue ? String(d.contractValue) : null,
-        startDate: new Date(d.startDate),
-        endDate: d.endDate ? new Date(d.endDate) : null,
+        startDate: startDateD,
+        endDate: editEndDate,
+        totalHours: editTotalHours,
+        totalWorkDays: editTotalWorkDays,
         notes: d.notes || null,
         // KPI metadata (DESIGN only — BUILD always clears)
         areaBandId: isDesign ? areaBandId : null,

@@ -1,7 +1,8 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import ProgressBar from "@/components/ProgressBar";
 import { togglePhaseLockAction } from "@/app/(app)/admin/projects/[id]/tasks/actions";
+import { updatePhaseProgressAction } from "@/app/(app)/admin/projects/actions";
 import AddTaskForm from "./AddTaskForm";
 import TaskRow, { type TaskListItem } from "./TaskRow";
 import type { EmpOption } from "@/components/EmployeeMultiPicker";
@@ -18,6 +19,7 @@ type Phase = {
 export default function PhaseRow({
   projectId,
   phase,
+  unit = "HOURS",
   tasks,
   assignees,
   canManage,
@@ -28,6 +30,7 @@ export default function PhaseRow({
 }: {
   projectId: string;
   phase: Phase;
+  unit?: "HOURS" | "DAYS";
   tasks: TaskListItem[];
   assignees: EmpOption[];
   canManage: boolean;
@@ -38,8 +41,22 @@ export default function PhaseRow({
 }) {
   const [open, setOpen] = useState(defaultExpanded || tasks.length > 0);
   const [pending, start] = useTransition();
-  const pct = phase.progressPct;
+  // Optimistic local progress for snappy slider UX
+  const [localPct, setLocalPct] = useState<number>(phase.progressPct);
+  useEffect(() => setLocalPct(phase.progressPct), [phase.progressPct]);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pct = localPct;
   const done = pct === 100;
+
+  const commitProgress = (next: number) => {
+    setLocalPct(next);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      start(async () => {
+        await updatePhaseProgressAction(phase.id, next);
+      });
+    }, 250);
+  };
 
   return (
     <div className="border-b border-white/[0.06] last:border-b-0">
@@ -58,15 +75,42 @@ export default function PhaseRow({
         <div className={`text-[13px] ${done ? "text-white/55 line-through" : "text-white/90"}`}>
           {phase.name}
         </div>
-        <div className="text-[12px] text-white/55 tabular-nums">{phase.hours} ц</div>
+        <div className="text-[12px] text-white/55 tabular-nums">
+          {unit === "DAYS"
+            ? `${(phase.hours / 8).toLocaleString("mn-MN", { maximumFractionDigits: 1 })} өдөр`
+            : `${phase.hours} ц`}
+        </div>
         <div className="text-[11px] tabular-nums text-white/55 text-right">
           {tasks.length} task
         </div>
-        <ProgressBar
-          value={pct}
-          showLabel
-          color={done ? "#3FCF8E" : pct >= 50 ? "#8B95FF" : "#E5B85C"}
-        />
+        {phase.progressLocked && canManage ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={pct}
+              onChange={(e) => commitProgress(parseInt(e.target.value, 10))}
+              className="flex-1 accent-brand"
+              title="Прогрэсс гараар тохируулах"
+            />
+            <span
+              className="text-[11px] font-semibold tabular-nums w-9 text-right"
+              style={{
+                color: done ? "#22C55E" : pct >= 50 ? "#6AA6FF" : "#F59E0B",
+              }}
+            >
+              {pct}%
+            </span>
+          </div>
+        ) : (
+          <ProgressBar
+            value={pct}
+            showLabel
+            color={done ? "#22C55E" : pct >= 50 ? "#6AA6FF" : "#F59E0B"}
+          />
+        )}
         <div className="flex items-center justify-end gap-2">
           {canManage && (
             <button

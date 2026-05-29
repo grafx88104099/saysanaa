@@ -20,6 +20,9 @@ const recordSchema = z.object({
 
 export type AttState = { ok?: boolean; error?: string } | undefined;
 
+/** Statuses that represent actual presence — clear hoursWorked for the rest. */
+const WORKING_STATUSES = new Set<AttendanceStatus>(["PRESENT", "LATE", "REMOTE"]);
+
 /** Insert or update one day's attendance. */
 export async function recordAttendanceAction(
   _prev: AttState,
@@ -40,26 +43,34 @@ export async function recordAttendanceAction(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
   const d = parsed.data;
 
-  // Auth: own record OR ADMIN/PM
+  // Auth: own record (if active) OR ADMIN/PM
   const myEmp = await prisma.employee.findUnique({ where: { userId: me.uid } });
   const isManager = me.role === "ADMIN" || me.role === "PM";
-  if (!isManager && (!myEmp || myEmp.id !== d.employeeId)) {
-    return { error: "Эрх дутуу" };
+  if (!isManager) {
+    if (!myEmp || myEmp.id !== d.employeeId) return { error: "Эрх дутуу" };
+    if (!myEmp.active) return { error: "Идэвхгүй бүртгэл — өөрчлөх боломжгүй" };
   }
 
   // Compose datetimes
   const baseDate = new Date(d.date);
-  const checkInDate = d.checkInAt
+  const isWorkingStatus = WORKING_STATUSES.has(d.status);
+  // Clear check-in/out + hours for non-working statuses (LEAVE/SICK/ABSENT/HOLIDAY)
+  const checkInDate = isWorkingStatus && d.checkInAt
     ? new Date(`${d.date}T${d.checkInAt}:00`)
     : null;
-  const checkOutDate = d.checkOutAt
+  const checkOutDate = isWorkingStatus && d.checkOutAt
     ? new Date(`${d.date}T${d.checkOutAt}:00`)
     : null;
-  // Auto-compute hoursWorked if not provided but both times present
-  let computedHours = d.hoursWorked ?? null;
-  if (computedHours == null && checkInDate && checkOutDate) {
-    const diffMs = checkOutDate.getTime() - checkInDate.getTime();
-    if (diffMs > 0) computedHours = Math.round((diffMs / 3_600_000) * 10) / 10;
+  // Auto-compute hoursWorked if not provided but both times present.
+  // Wrap (checkOut < checkIn) returns null with a warning rather than 0.
+  let computedHours: number | null = null;
+  if (isWorkingStatus) {
+    if (d.hoursWorked != null) {
+      computedHours = d.hoursWorked;
+    } else if (checkInDate && checkOutDate) {
+      const diffMs = checkOutDate.getTime() - checkInDate.getTime();
+      if (diffMs > 0) computedHours = Math.round((diffMs / 3_600_000) * 10) / 10;
+    }
   }
 
   const upserted = await prisma.attendance.upsert({
@@ -98,8 +109,9 @@ export async function deleteAttendanceAction(id: string): Promise<AttState> {
   if (!entry) return { ok: true };
   const myEmp = await prisma.employee.findUnique({ where: { userId: me.uid } });
   const isManager = me.role === "ADMIN" || me.role === "PM";
-  if (!isManager && (!myEmp || myEmp.id !== entry.employeeId)) {
-    return { error: "Эрх дутуу" };
+  if (!isManager) {
+    if (!myEmp || myEmp.id !== entry.employeeId) return { error: "Эрх дутуу" };
+    if (!myEmp.active) return { error: "Идэвхгүй бүртгэл — устгах боломжгүй" };
   }
   await prisma.attendance.delete({ where: { id } });
   await audit("attendance.delete", me.uid, id, { employee: entry.employeeId });
@@ -167,6 +179,14 @@ export async function approveLeaveAction(
   const req = await prisma.leaveRequest.findUnique({ where: { id } });
   if (!req) return { error: "Олдсонгүй" };
   if (req.status !== "PENDING") return { error: "Аль хэдийн шийдвэрлэгдсэн" };
+  // Block self-approval — managers cannot rubber-stamp their own leave.
+  const approverEmp = await prisma.employee.findUnique({
+    where: { userId: me.uid },
+    select: { id: true },
+  });
+  if (approverEmp && req.employeeId === approverEmp.id) {
+    return { error: "Өөрийн чөлөөг өөрөө зөвшөөрөх боломжгүй" };
+  }
   await prisma.leaveRequest.update({
     where: { id },
     data: {

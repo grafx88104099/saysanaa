@@ -528,6 +528,7 @@ model ProjectPptSlot {
   uploadedBy String
   createdAt  DateTime        @default(now())
 
+  @@unique([deckId, kind, ordinal])
   @@index([deckId, kind, ordinal])
 }
 

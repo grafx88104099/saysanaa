@@ -343,7 +343,9 @@ function QuickEdit({
     fd.set("employeeId", employeeId);
     fd.set("date", date);
     fd.set("status", status);
-    if (hours) fd.set("hoursWorked", hours);
+    // Only attach hours for working statuses; LEAVE/SICK/ABSENT/HOLIDAY → no hours.
+    const isWorking = status === "PRESENT" || status === "LATE" || status === "REMOTE";
+    if (isWorking && hours) fd.set("hoursWorked", hours);
     start(async () => {
       const r = await recordAttendanceAction(undefined, fd);
       if (r?.ok) onClose();

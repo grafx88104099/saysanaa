@@ -32,10 +32,33 @@ export async function saveGoalAction(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
   const d = parsed.data;
   if (d.parentId) {
+    // Reject self-parent
+    if (d.id && d.parentId === d.id) {
+      return { error: "Зорилго өөрийгөө эх зорилго болгож болохгүй" };
+    }
     const parent = await prisma.companyGoal.findUnique({ where: { id: d.parentId } });
     if (!parent) return { error: "Эх зорилго олдсонгүй" };
     if (parent.year !== d.year)
       return { error: "Дэд зорилгын жил эх зорилготой тохирох ёстой" };
+
+    // Walk parent chain to detect cycle: an existing goal cannot be re-parented
+    // to one of its own descendants.
+    if (d.id) {
+      const visited = new Set<string>();
+      let cursor: string | null = d.parentId;
+      while (cursor && !visited.has(cursor)) {
+        if (cursor === d.id) {
+          return { error: "Cycle: эх зорилгын гинж өөрийн дэд зорилгод хүрсэн" };
+        }
+        visited.add(cursor);
+        const step: { parentId: string | null } | null = await prisma.companyGoal.findUnique({
+          where: { id: cursor },
+          select: { parentId: true },
+        });
+        cursor = step?.parentId ?? null;
+        if (visited.size > 200) break; // safety
+      }
+    }
   }
   if (d.id) {
     await prisma.companyGoal.update({

@@ -17,49 +17,47 @@ export default async function InsightsPage() {
   const s = await readSession();
   if (!s || (s.role !== "ADMIN" && s.role !== "PM")) redirect("/dashboard");
 
-  // Aggregates
-  const [
-    byStatusRaw,
-    byTypeRaw,
-    employeeCount,
-    activeEmployeeCount,
-    totalRevenue,
-    avgKpiSnapshot,
-    monthlyClosedRaw,
-    recentClosed,
-  ] = await Promise.all([
-    prisma.project.groupBy({ by: ["status"], _count: { _all: true } }),
-    prisma.project.groupBy({ by: ["type"], _count: { _all: true } }),
-    prisma.employee.count(),
-    prisma.employee.count({ where: { active: true } }),
-    prisma.project.aggregate({
-      _sum: { contractValue: true },
-      where: { status: { in: ["ACTIVE", "COMPLETED"] } },
-    }),
-    prisma.projectKpiSnapshot.aggregate({
-      _avg: {
-        efficiency: true,
-        qualityRating: true,
-        clientSatisfaction: true,
-      },
-      _count: { _all: true },
-    }),
-    // closed projects by month for last 12 months
-    prisma.$queryRaw<Array<{ month: string; count: bigint }>>`
+  // Sequential — DATABASE_URL uses connection_limit=1, so Promise.all would
+  // queue beyond the pool deadline and trigger P2024 timeouts.
+  const byStatusRaw = await prisma.project.groupBy({
+    by: ["status"],
+    _count: { _all: true },
+  });
+  const byTypeRaw = await prisma.project.groupBy({
+    by: ["type"],
+    _count: { _all: true },
+  });
+  const employeeCount = await prisma.employee.count();
+  const activeEmployeeCount = await prisma.employee.count({ where: { active: true } });
+  const totalRevenue = await prisma.project.aggregate({
+    _sum: { contractValue: true },
+    where: { status: { in: ["ACTIVE", "COMPLETED"] } },
+  });
+  const avgKpiSnapshot = await prisma.projectKpiSnapshot.aggregate({
+    _avg: {
+      efficiency: true,
+      qualityRating: true,
+      clientSatisfaction: true,
+    },
+    _count: { _all: true },
+  });
+  // closed projects by month for last 12 months
+  const monthlyClosedRaw = await prisma.$queryRaw<
+    Array<{ month: string; count: bigint }>
+  >`
       SELECT to_char("closedAt", 'YYYY-MM') AS month, COUNT(*)::bigint AS count
       FROM "Project"
       WHERE "closedAt" IS NOT NULL
         AND "closedAt" >= NOW() - INTERVAL '12 months'
       GROUP BY 1
       ORDER BY 1 ASC
-    `,
-    prisma.project.findMany({
-      where: { status: "COMPLETED" },
-      orderBy: { closedAt: "desc" },
-      take: 5,
-      select: { id: true, code: true, name: true, closedAt: true, type: true },
-    }),
-  ]);
+    `;
+  const recentClosed = await prisma.project.findMany({
+    where: { status: "COMPLETED" },
+    orderBy: { closedAt: "desc" },
+    take: 5,
+    select: { id: true, code: true, name: true, closedAt: true, type: true },
+  });
 
   const byStatus = new Map<ProjectStatus, number>();
   for (const r of byStatusRaw) byStatus.set(r.status, r._count._all);

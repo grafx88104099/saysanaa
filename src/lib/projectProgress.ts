@@ -65,9 +65,19 @@ export function computeExpectedProgress(
   const daysTotal = calcWorkDaysBetween(start, end, holidayKeys);
   if (daysTotal <= 0) return empty;
 
-  // Days elapsed from start to min(today, end).
-  const refDay = today < start ? start : today > end ? end : today;
-  const daysElapsed = today < start ? 0 : calcWorkDaysBetween(start, refDay, holidayKeys);
+  // Days elapsed measured as **completed** working days. Start day → 0%, end of
+  // start day → 1/total. We approximate by counting workdays strictly before
+  // today (so start-day morning still shows 0%, not 1/total ≈ 5%).
+  let daysElapsed = 0;
+  if (today > start) {
+    const dayBeforeToday = new Date(today);
+    dayBeforeToday.setDate(dayBeforeToday.getDate() - 1);
+    if (dayBeforeToday >= start) {
+      const lastCompleted = dayBeforeToday < end ? dayBeforeToday : end;
+      daysElapsed = calcWorkDaysBetween(start, lastCompleted, holidayKeys);
+    }
+  }
+  if (today > end) daysElapsed = daysTotal;
   const daysLeft = today > end ? 0 : calcWorkDaysBetween(today, end, holidayKeys);
 
   const expectedPct = Math.max(0, Math.min(100, Math.round((daysElapsed / daysTotal) * 100)));

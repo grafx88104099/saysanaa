@@ -19,18 +19,56 @@ export const supabaseAdmin = createClient(URL, KEY, {
 const checked = new Set<string>();
 async function ensureBucket(
   bucket: string,
-  opts: { fileSizeLimit?: number; allowedMimeTypes?: string[] } = {},
+  opts: { fileSizeLimit?: number; allowedMimeTypes?: string[]; isPublic?: boolean } = {},
 ) {
   if (checked.has(bucket)) return;
   const { data, error } = await supabaseAdmin.storage.getBucket(bucket);
   if (error || !data) {
     await supabaseAdmin.storage.createBucket(bucket, {
-      public: true,
+      public: opts.isPublic ?? false,
       fileSizeLimit: opts.fileSizeLimit,
       allowedMimeTypes: opts.allowedMimeTypes,
     });
   }
   checked.add(bucket);
+}
+
+/**
+ * Generate a short-lived signed URL for a private bucket object.
+ * The returned URL embeds a time-limited token; safe to send to authenticated
+ * users (it expires) but should not be stored long-term.
+ */
+export async function signedUrl(
+  bucket: string,
+  path: string,
+  expiresInSeconds: number = 60 * 10
+): Promise<string | null> {
+  if (!path) return null;
+  // Accept either bucket-relative paths or full public URLs (extract path).
+  const marker = `/object/public/${bucket}/`;
+  const idx = path.indexOf(marker);
+  const objectPath = idx >= 0 ? path.slice(idx + marker.length) : path;
+  const { data, error } = await supabaseAdmin.storage
+    .from(bucket)
+    .createSignedUrl(objectPath, expiresInSeconds);
+  if (error || !data) return null;
+  return data.signedUrl;
+}
+
+/** Strip query params + extract storage path from any Supabase URL. */
+function objectPathFromUrl(bucket: string, raw: string): string {
+  const marker = `/object/public/${bucket}/`;
+  const i = raw.indexOf(marker);
+  if (i >= 0) return raw.slice(i + marker.length).split("?")[0];
+  const m2 = `/object/sign/${bucket}/`;
+  const j = raw.indexOf(m2);
+  if (j >= 0) return raw.slice(j + m2.length).split("?")[0];
+  return raw;
+}
+
+/** Random unguessable slug component — replaces timestamps to prevent enumeration. */
+function randomSlug(): string {
+  return crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 }
 
 export async function uploadAvatar(
@@ -40,6 +78,7 @@ export async function uploadAvatar(
   await ensureBucket(AVATARS_BUCKET, {
     fileSizeLimit: 5 * 1024 * 1024,
     allowedMimeTypes: ["image/png", "image/jpeg", "image/webp"],
+    isPublic: true, // Profile photos are intentionally public-readable
   });
   const path = `${crypto.randomUUID()}.${ext}`;
   const buf = Buffer.from(await file.arrayBuffer());
@@ -56,11 +95,16 @@ export async function uploadContract(
   fileName: string,
   projectId: string,
 ): Promise<{ url: string; path: string }> {
+  // NOTE: existing bucket is public; ensureBucket is a no-op for existing buckets.
+  // For new deployments, the false flag prevents accidental public creation —
+  // serve via /api/files proxy (signedUrl helper above) for full privacy.
   await ensureBucket(CONTRACTS_BUCKET, {
     fileSizeLimit: 25 * 1024 * 1024,
+    isPublic: false,
   });
   const safe = fileName.replace(/[^\w.\-]/g, "_");
-  const path = `${projectId}/${Date.now()}-${safe}`;
+  // Random slug instead of timestamp → no enumeration even if projectId leaks
+  const path = `${projectId}/${randomSlug()}-${safe}`;
   const buf = Buffer.from(await file.arrayBuffer());
   const { error } = await supabaseAdmin.storage
     .from(CONTRACTS_BUCKET)
@@ -77,9 +121,10 @@ export async function uploadTaskFile(
 ): Promise<{ url: string; size: number; name: string }> {
   await ensureBucket(TASK_FILES_BUCKET, {
     fileSizeLimit: 20 * 1024 * 1024,
+    isPublic: false,
   });
   const safe = fileName.replace(/[^\w.\-]/g, "_");
-  const path = `${taskId}/${Date.now()}-${safe}`;
+  const path = `${taskId}/${randomSlug()}-${safe}`;
   const buf = Buffer.from(await file.arrayBuffer());
   const { error } = await supabaseAdmin.storage
     .from(TASK_FILES_BUCKET)
@@ -89,6 +134,8 @@ export async function uploadTaskFile(
   return { url: data.publicUrl, size: file.size, name: fileName };
 }
 
+void objectPathFromUrl; // exported helper kept for future migration to /api/files proxy
+
 export async function uploadPptImage(
   file: Blob,
   fileName: string,
@@ -97,9 +144,15 @@ export async function uploadPptImage(
   await ensureBucket(PPT_IMAGES_BUCKET, {
     fileSizeLimit: 15 * 1024 * 1024,
     allowedMimeTypes: ["image/png", "image/jpeg", "image/webp"],
+    // Public-read with unguessable random-slug paths. PPT images are intended
+    // for end-client decks (rendered by trusted server fetch in pptx.ts); the
+    // SSRF allowlist in pptx.ts requires *.supabase.co. Browser <img> tags in
+    // the manager UI also need direct access. Acceptable risk: leaked URL
+    // exposes a single render, not a project export.
+    isPublic: true,
   });
   const safe = fileName.replace(/[^\w.\-]/g, "_");
-  const path = `${projectId}/${Date.now()}-${safe}`;
+  const path = `${projectId}/${randomSlug()}-${safe}`;
   const buf = Buffer.from(await file.arrayBuffer());
   const { error } = await supabaseAdmin.storage
     .from(PPT_IMAGES_BUCKET)

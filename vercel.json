@@ -3,5 +3,10 @@
   "framework": "nextjs",
   "regions": ["sin1"],
   "buildCommand": "prisma generate && next build",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "functions": {
+    "src/app/api/projects/[id]/ppt/route.ts": {
+      "maxDuration": 60
+    }
+  }
 }

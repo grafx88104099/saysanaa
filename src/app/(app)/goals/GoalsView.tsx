@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   saveGoalAction,
   updateGoalProgressAction,
@@ -241,13 +241,31 @@ function SubGoalRow({
   onEdit: () => void;
 }) {
   const [pending, start] = useTransition();
+  // Optimistic local state — slider stays at the user's finger position even
+  // while the server commit is in flight. Snapping to prop only when we are
+  // NOT dragging avoids the "thumb jumps back" UX bug.
+  const [localPct, setLocalPct] = useState<number>(goal.progress);
+  const draggingRef = useRef(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (draggingRef.current) return;
+    setLocalPct(goal.progress);
+  }, [goal.progress]);
+
   const setPct = (next: number) => {
-    start(async () => {
-      await updateGoalProgressAction(goal.id, next);
-    });
+    draggingRef.current = true;
+    setLocalPct(next);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+      start(async () => {
+        await updateGoalProgressAction(goal.id, next);
+        draggingRef.current = false;
+      });
+    }, 250);
   };
   const color =
-    goal.progress >= 100 ? "#22C55E" : goal.progress >= 50 ? "#6AA6FF" : "#F59E0B";
+    localPct >= 100 ? "#22C55E" : localPct >= 50 ? "#6AA6FF" : "#F59E0B";
   return (
     <div className="flex items-center gap-3">
       <span className="text-sub text-[11px]">↳</span>
@@ -265,8 +283,7 @@ function SubGoalRow({
           min={0}
           max={100}
           step={5}
-          value={goal.progress}
-          disabled={pending}
+          value={localPct}
           onChange={(e) => setPct(parseInt(e.target.value))}
           className="w-32 accent-brand"
           title="Гүйцэтгэлийн хувь"
@@ -275,7 +292,7 @@ function SubGoalRow({
         <div className="w-32 h-1.5 rounded-full bg-bd overflow-hidden">
           <div
             className="h-full rounded-full"
-            style={{ width: `${goal.progress}%`, background: color }}
+            style={{ width: `${localPct}%`, background: color }}
           />
         </div>
       )}
@@ -283,7 +300,8 @@ function SubGoalRow({
         className="w-10 text-right text-[12px] font-semibold tabular-nums"
         style={{ color }}
       >
-        {goal.progress}%
+        {localPct}%
+        {pending && <span className="text-sub ml-0.5">…</span>}
       </span>
       {isManager && (
         <button

@@ -93,15 +93,9 @@ export async function uploadPptImageAction(
 
   const deck = await ensureDeck(projectId);
 
-  // Count existing of this kind
-  const existing = await prisma.projectPptSlot.count({
-    where: { deckId: deck.id, kind },
-  });
-  if (existing >= MAX_BY_KIND[kind]) {
-    return { error: `${kind} төрөл ${MAX_BY_KIND[kind]} зурагнаас илүү байж болохгүй` };
-  }
-
-  // Upload to storage
+  // Upload to storage first (so a transaction rollback below won't need cleanup
+  // — storage objects are scoped per-project anyway). If DB insert fails, the
+  // image becomes an orphan blob; acceptable risk vs holding a tx during upload.
   let url: string;
   try {
     const out = await uploadPptImage(file, file.name, projectId);
@@ -110,21 +104,41 @@ export async function uploadPptImageAction(
     return { error: e instanceof Error ? e.message : "Upload алдаа" };
   }
 
-  const maxOrd = await prisma.projectPptSlot.aggregate({
-    where: { deckId: deck.id, kind },
-    _max: { ordinal: true },
-  });
-
-  await prisma.projectPptSlot.create({
-    data: {
-      deckId: deck.id,
-      kind,
-      ordinal: (maxOrd._max.ordinal ?? -1) + 1,
-      imageUrl: url,
-      imageName: file.name.slice(0, 200),
-      uploadedBy: me.uid,
-    },
-  });
+  // Atomic: count + ordinal pick + create inside a single transaction so two
+  // concurrent uploads cannot both pass the cap or collide on ordinal.
+  // The new @@unique([deckId, kind, ordinal]) also blocks dup-ordinal races.
+  try {
+    await prisma.$transaction(async (tx) => {
+      const existing = await tx.projectPptSlot.count({
+        where: { deckId: deck.id, kind },
+      });
+      if (existing >= MAX_BY_KIND[kind]) {
+        throw new Error("CAP_EXCEEDED");
+      }
+      const maxOrd = await tx.projectPptSlot.aggregate({
+        where: { deckId: deck.id, kind },
+        _max: { ordinal: true },
+      });
+      await tx.projectPptSlot.create({
+        data: {
+          deckId: deck.id,
+          kind,
+          ordinal: (maxOrd._max.ordinal ?? -1) + 1,
+          imageUrl: url,
+          imageName: file.name.slice(0, 200),
+          uploadedBy: me.uid,
+        },
+      });
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
+    if (msg === "CAP_EXCEEDED") {
+      return {
+        error: `${kind} төрөл ${MAX_BY_KIND[kind]} зурагнаас илүү байж болохгүй`,
+      };
+    }
+    return { error: msg || "Алдаа" };
+  }
   await audit("ppt.image.add", me.uid, projectId, { kind });
   revalidatePath(`/admin/projects/${projectId}/ppt`);
   return { ok: true };

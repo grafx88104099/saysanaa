@@ -191,6 +191,28 @@ export async function createProjectAction(
     endDate = new Date(d.endDate!);
     totalWorkDays = calcWorkDaysBetween(startDate, endDate, holidayKeys);
     totalHours = totalWorkDays * 8;
+    // BUILD: distribute phase hours so that sum(phases.hours) === totalHours.
+    // Each phase's form-supplied hours become a proportional share of the
+    // calendar-derived total; if user-entered values are zero or undefined,
+    // distribute evenly. This keeps phase-sum and project total consistent.
+    const userSum = phases.reduce((s, p) => s + p.hours, 0);
+    if (userSum > 0 && phases.length > 0) {
+      const scale = totalHours / userSum;
+      let running = 0;
+      for (let i = 0; i < phases.length; i++) {
+        const v = i === phases.length - 1
+          ? totalHours - running
+          : Math.round(phases[i].hours * scale);
+        phases[i].hours = Math.max(0, v);
+        running += phases[i].hours;
+      }
+    } else if (phases.length > 0) {
+      const per = Math.floor(totalHours / phases.length);
+      const remainder = totalHours - per * phases.length;
+      for (let i = 0; i < phases.length; i++) {
+        phases[i].hours = per + (i === phases.length - 1 ? remainder : 0);
+      }
+    }
   } else {
     totalHours = phases.reduce((s, p) => s + p.hours, 0);
     endDate = d.endDate
@@ -343,6 +365,26 @@ export async function updateProjectAction(
     editEndDate = new Date(d.endDate!);
     editTotalWorkDays = calcWorkDaysBetween(startDateD, editEndDate, holidayKeys);
     editTotalHours = editTotalWorkDays * 8;
+    // Distribute phase hours so sum(phases.hours) === editTotalHours (same as create flow).
+    const userSum = phases.reduce((s, p) => s + p.hours, 0);
+    if (userSum > 0 && phases.length > 0) {
+      const scale = editTotalHours / userSum;
+      let running = 0;
+      for (let i = 0; i < phases.length; i++) {
+        const v =
+          i === phases.length - 1
+            ? editTotalHours - running
+            : Math.round(phases[i].hours * scale);
+        phases[i].hours = Math.max(0, v);
+        running += phases[i].hours;
+      }
+    } else if (phases.length > 0) {
+      const per = Math.floor(editTotalHours / phases.length);
+      const remainder = editTotalHours - per * phases.length;
+      for (let i = 0; i < phases.length; i++) {
+        phases[i].hours = per + (i === phases.length - 1 ? remainder : 0);
+      }
+    }
   } else {
     editTotalHours = phases.reduce((s, p) => s + p.hours, 0);
     editEndDate = d.endDate ? new Date(d.endDate) : null;
@@ -622,6 +664,16 @@ export async function updatePhaseProgressAction(phaseId: string, progressPct: nu
   const pct = Math.max(0, Math.min(100, Math.round(progressPct)));
   const phase = await prisma.projectPhase.findUnique({ where: { id: phaseId } });
   if (!phase) return { error: "Олдсонгүй" } as const;
+
+  // The drag slider in PhaseRow renders only when progressLocked. If the phase
+  // is in Auto mode, refuse manual writes — they would be overwritten by
+  // recalcProjectStats anyway, and an audit trail of "manual change to an auto
+  // phase" is misleading.
+  if (!phase.progressLocked) {
+    return {
+      error: "Фаз нь автомат — эхлээд '🔒 Гар' горимд шилжүүлнэ үү",
+    } as const;
+  }
 
   // Эрхийн зураглал: ADMIN/PM — бүх фаз; өөр role-уудаас зөвхөн төслийн LEAD л фаз progress-ийг өөрчилнө.
   // Энэ нь хувь хувийн ажилтан санамсаргүй ахицыг гажуудуулахаас сэргийлнэ.

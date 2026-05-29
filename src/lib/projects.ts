@@ -109,24 +109,40 @@ export async function createProjectWithUniqueCode<T>(
 }
 
 /**
- * Төслийн нийт цаг, ажлын өдөр, гүйцэтгэлийн %-г бодож шинэчлэнэ.
- * Phase progressPct-ийг weight=hours-ээр жигнэсэн дундажаар тооцоолно.
+ * Төслийн гүйцэтгэлийн %-г бодож шинэчлэнэ. Phase progressPct-ийг weight=hours-ээр
+ * жигнэсэн дундажаар тооцоолно.
+ *
+ * BUILD төсөл: totalHours/totalWorkDays/endDate нь гэрээт зүйл — захиалагч
+ * хариуцсан endDate-ээс тооцогддог. recalc нь зөвхөн progressPct-г шинэчилнэ.
+ *
+ * DESIGN төсөл: totalHours = phase-sum (KPI норм); endDate нь гар оруулсан
+ * утга байвал хэвээр үлдээнэ, эс бол totalHours-аас тооцно.
  */
 export async function recalcProjectStats(projectId: string) {
   const phases = await prisma.projectPhase.findMany({
     where: { projectId },
     orderBy: { ordinal: "asc" },
   });
-  const totalHours = phases.reduce((s, p) => s + p.hours, 0);
-  const totalWorkDays = calcWorkDays(totalHours);
+  const phaseSumHours = phases.reduce((s, p) => s + p.hours, 0);
   const weighted = phases.reduce((s, p) => s + p.hours * p.progressPct, 0);
-  const progressPct = totalHours > 0 ? Math.round(weighted / totalHours) : 0;
+  const progressPct = phaseSumHours > 0 ? Math.round(weighted / phaseSumHours) : 0;
 
   const proj = await prisma.project.findUnique({ where: { id: projectId } });
   if (!proj) return null;
 
+  // BUILD: контрактын зүйлийг хадгал — зөвхөн progressPct шинэчлэнэ.
+  if (proj.type === "BUILD") {
+    return prisma.project.update({
+      where: { id: projectId },
+      data: { progressPct },
+    });
+  }
+
+  // DESIGN: phase-sum = totalHours. endDate нь хэрэглэгчээс байвал хадгална.
+  const totalHours = phaseSumHours;
+  const totalWorkDays = calcWorkDays(totalHours);
   let endDate = proj.endDate;
-  if (proj.startDate) {
+  if (proj.startDate && !proj.endDate) {
     const holidayKeys = await loadHolidayKeys();
     endDate = calcEndDate(proj.startDate, totalHours, holidayKeys);
   }

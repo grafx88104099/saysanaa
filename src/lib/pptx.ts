@@ -49,7 +49,8 @@ export type DeckData = {
 };
 
 function fmtMoney(n: number | null): string {
-  if (n == null || n === 0) return "—";
+  if (n == null) return "—";
+  if (n === 0) return "0 ₮";
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 2)}M ₮`;
   return `${n.toLocaleString("mn-MN")} ₮`;
 }
@@ -63,17 +64,66 @@ const PROJECT_TYPE_MN: Record<string, string> = {
   BUILD: "Засал гүйцэтгэл",
 };
 
-/** Try to fetch image as base64. Returns null on failure (skipped silently). */
-async function fetchImageData(url: string): Promise<string | null> {
+/**
+ * URL allowlist: accept only https-Supabase public URLs.
+ * Blocks SSRF: any http://, file://, localhost, RFC1918, AWS metadata
+ * (169.254.169.254), GCP/Azure metadata endpoints, etc.
+ */
+function isAllowedImageUrl(raw: string): boolean {
   try {
-    const r = await fetch(url, { cache: "no-store" });
+    const u = new URL(raw);
+    if (u.protocol !== "https:") return false;
+    if (!/\.supabase\.co$/i.test(u.hostname)) return false;
+    // reject literal IP addresses just in case
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(u.hostname)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Fetch image as base64 — returns null on failure (rendered as placeholder). */
+async function fetchImageData(url: string): Promise<string | null> {
+  if (!isAllowedImageUrl(url)) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8_000); // 8s per image
+  try {
+    const r = await fetch(url, { cache: "no-store", signal: controller.signal });
     if (!r.ok) return null;
+    // Cap image size at 20MB to avoid memory blow-ups
+    const cl = parseInt(r.headers.get("content-length") || "0", 10);
+    if (cl > 20 * 1024 * 1024) return null;
     const buf = Buffer.from(await r.arrayBuffer());
+    if (buf.byteLength > 20 * 1024 * 1024) return null;
     const ct = r.headers.get("content-type") || "image/jpeg";
+    if (!ct.startsWith("image/")) return null;
     return `data:${ct};base64,${buf.toString("base64")}`;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
+}
+
+/** Limited-concurrency Promise.all (avoid spamming Supabase). */
+async function mapConcurrent<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, idx: number) => Promise<R>
+): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let i = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }).map(
+    async () => {
+      while (true) {
+        const idx = i++;
+        if (idx >= items.length) return;
+        out[idx] = await fn(items[idx], idx);
+      }
+    }
+  );
+  await Promise.all(workers);
+  return out;
 }
 
 /** Slide chrome — dark navy bg + gradient header line + small footer. */
@@ -196,9 +246,11 @@ async function addGallery(
   const max = 12;
   const subset = slots.slice(0, max);
   const cells = galleryLayout(subset.length);
+  // Parallel-fetch (concurrency 4) to stay within Vercel function timeout.
+  const datas = await mapConcurrent(subset, 4, (s) => fetchImageData(s.imageUrl));
   for (let i = 0; i < subset.length; i++) {
     const cell = cells[i];
-    const data = await fetchImageData(subset[i].imageUrl);
+    const data = datas[i];
     if (data) {
       slide.addImage({
         data,
@@ -526,8 +578,13 @@ export async function buildPresentation(
         }
         return out;
       })();
+      const matDatas = await mapConcurrent(
+        matSlots.slice(0, cells.length),
+        4,
+        (s) => fetchImageData(s.imageUrl)
+      );
       for (let i = 0; i < cells.length; i++) {
-        const data = await fetchImageData(matSlots[i].imageUrl);
+        const data = matDatas[i];
         if (data) {
           s.addImage({
             data,

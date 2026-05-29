@@ -43,19 +43,43 @@ export default function PhaseRow({
   const [pending, start] = useTransition();
   // Optimistic local progress for snappy slider UX
   const [localPct, setLocalPct] = useState<number>(phase.progressPct);
-  useEffect(() => setLocalPct(phase.progressPct), [phase.progressPct]);
+  // Dragging flag — guards the useEffect prop-sync so an in-flight server
+  // commit cannot snap the slider back while the user is mid-drag.
+  const draggingRef = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (draggingRef.current) return;
+    setLocalPct(phase.progressPct);
+  }, [phase.progressPct]);
   const pct = localPct;
   const done = pct === 100;
 
+  const cancelDebounce = () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+  };
+
   const commitProgress = (next: number) => {
+    draggingRef.current = true;
     setLocalPct(next);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    cancelDebounce();
     debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
       start(async () => {
         await updatePhaseProgressAction(phase.id, next);
+        draggingRef.current = false;
       });
     }, 250);
+  };
+
+  const onLockToggle = () => {
+    // Cancel any pending manual commit so a stale value isn't written after
+    // the phase has been flipped back to Auto mode.
+    cancelDebounce();
+    draggingRef.current = false;
+    start(() => togglePhaseLockAction(phase.id, !phase.progressLocked));
   };
 
   return (
@@ -115,9 +139,7 @@ export default function PhaseRow({
           {canManage && (
             <button
               type="button"
-              onClick={() =>
-                start(() => togglePhaseLockAction(phase.id, !phase.progressLocked))
-              }
+              onClick={onLockToggle}
               disabled={pending}
               title={
                 phase.progressLocked

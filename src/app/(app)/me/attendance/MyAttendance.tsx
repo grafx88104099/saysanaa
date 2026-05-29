@@ -297,11 +297,16 @@ function EditDay({
     fd.set("employeeId", employeeId);
     fd.set("date", date);
     fd.set("status", status);
-    if (status === "PRESENT" || status === "LATE" || status === "REMOTE") {
+    // For non-working statuses (LEAVE/SICK/ABSENT/HOLIDAY), do NOT send check
+    // in/out or hours — even if the input still has stale values from a prior
+    // PRESENT state. Server also enforces this, but stripping client-side
+    // prevents the network payload from carrying confusing fields.
+    const isWorking = status === "PRESENT" || status === "LATE" || status === "REMOTE";
+    if (isWorking) {
       fd.set("checkInAt", checkIn);
       fd.set("checkOutAt", checkOut);
+      if (hours) fd.set("hoursWorked", hours);
     }
-    if (hours) fd.set("hoursWorked", hours);
     fd.set("note", note);
     start(async () => {
       const r = await recordAttendanceAction(undefined, fd);

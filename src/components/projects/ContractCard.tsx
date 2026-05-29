@@ -104,10 +104,11 @@ export default function ContractCard({
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <a
-              href={contract.url}
+              href={`/api/files/contract/${projectId}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-ghost"
+              title="Гэрээ татах (нэвтрэх шаардлагатай)"
             >
               Татах
             </a>

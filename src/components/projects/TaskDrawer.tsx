@@ -406,7 +406,7 @@ function Attachments({
           className="flex items-center gap-2 border border-white/10 rounded px-3 py-1.5 text-[12px]"
         >
           <a
-            href={a.url}
+            href={`/api/files/task-attachment/${a.id}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 truncate text-white/85 hover:text-white"

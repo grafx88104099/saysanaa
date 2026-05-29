@@ -210,25 +210,49 @@ function SlotGroup({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  // Per-file progress + accumulated errors so partial failures don't abort
+  // the whole batch and the user can see which file(s) failed.
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [dragOver, setDragOver] = useState(false);
   const remaining = info.max - slots.length;
 
-  const upload = (files: FileList | null) => {
+  const upload = (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return;
-    setError(null);
+    const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (arr.length === 0) {
+      setErrors(["Зөвхөн зураг файл зөвшөөрнө"]);
+      return;
+    }
+    setErrors([]);
+    setProgress({ done: 0, total: arr.length });
     start(async () => {
-      for (const f of Array.from(files)) {
-        if (!f.type.startsWith("image/")) continue;
-        const fd = new FormData();
-        fd.set("file", f);
-        const r = await uploadPptImageAction(projectId, kind, fd);
-        if (r?.error) {
-          setError(r.error);
-          break;
+      const errs: string[] = [];
+      for (let i = 0; i < arr.length; i++) {
+        const f = arr[i];
+        try {
+          const fd = new FormData();
+          fd.set("file", f);
+          const r = await uploadPptImageAction(projectId, kind, fd);
+          if (r?.error) errs.push(`${f.name}: ${r.error}`);
+        } catch (e) {
+          errs.push(`${f.name}: ${e instanceof Error ? e.message : "Алдаа"}`);
         }
+        setProgress({ done: i + 1, total: arr.length });
+      }
+      setErrors(errs);
+      // Auto-clear progress shortly after if no errors
+      if (errs.length === 0) {
+        setTimeout(() => setProgress(null), 800);
       }
       if (inputRef.current) inputRef.current.value = "";
     });
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    upload(e.dataTransfer.files);
   };
 
   return (
@@ -243,13 +267,22 @@ function SlotGroup({
           </h3>
           <p className="text-[11px] text-sub">{info.subtitle}</p>
         </div>
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={pending || remaining <= 0}
-          className={remaining > 0 ? "btn-ghost h-9 px-3" : "btn-ghost h-9 px-3 opacity-50"}
-        >
-          {pending ? "Ачаалж байна…" : `+ Зураг (${remaining})`}
-        </button>
+        <div className="flex items-center gap-2">
+          {progress && (
+            <span className="text-[11px] text-sub tabular-nums">
+              {progress.done}/{progress.total} ачаалж байна…
+            </span>
+          )}
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={pending || remaining <= 0}
+            className={remaining > 0 ? "btn-ghost h-9 px-3" : "btn-ghost h-9 px-3 opacity-50"}
+          >
+            {pending && progress
+              ? `${progress.done}/${progress.total}…`
+              : `+ Зураг (${remaining})`}
+          </button>
+        </div>
         <input
           ref={inputRef}
           type="file"
@@ -260,18 +293,53 @@ function SlotGroup({
         />
       </div>
 
-      {error && (
-        <div className="mb-2 text-[11px] text-dangerInk bg-danger/10 border border-danger/30 rounded px-2 py-1">
-          {error}
+      {errors.length > 0 && (
+        <div className="mb-2 text-[11px] text-dangerInk bg-danger/10 border border-danger/30 rounded px-3 py-2 space-y-0.5">
+          <div className="font-semibold">
+            {errors.length} файл амжилтгүй:
+          </div>
+          {errors.slice(0, 5).map((err, i) => (
+            <div key={i} className="truncate">{err}</div>
+          ))}
+          {errors.length > 5 && (
+            <div className="text-sub">…болон бусад {errors.length - 5}</div>
+          )}
         </div>
       )}
 
       {slots.length === 0 ? (
-        <div className="panel p-6 text-center text-sub text-[12px] border-dashed">
-          Зураг ачаалаагүй
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          onClick={() => inputRef.current?.click()}
+          className={`panel p-6 text-center cursor-pointer transition border-dashed ${
+            dragOver
+              ? "border-brand bg-brand/10 shadow-[0_0_24px_rgba(106,166,255,0.20)]"
+              : "border-bd hover:border-brand/40"
+          }`}
+        >
+          <div className="text-sub text-[12px]">
+            Энд зураг чирж тавь эсвэл товш — {remaining} зураг үлдсэн
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            if (remaining > 0) setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 rounded-md transition ${
+            dragOver
+              ? "ring-2 ring-brand/50 bg-brand/[0.04] p-2"
+              : ""
+          }`}
+        >
           {slots.map((s) => (
             <SlotCard key={s.id} projectId={projectId} slot={s} />
           ))}

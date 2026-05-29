@@ -12,26 +12,41 @@ import ScheduleBadge from "@/components/projects/ScheduleBadge";
 import { loadHolidayKeys } from "@/lib/calendar";
 import { computeExpectedProgress } from "@/lib/projectProgress";
 
-export default async function MyProjectsPage() {
+const PAGE_SIZE = 24;
+
+export default async function MyProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const s = await readSession();
   if (!s) redirect("/login");
 
   const me = await prisma.employee.findUnique({ where: { userId: s.uid } });
   if (!me) redirect("/login");
 
+  const sp = await searchParams;
+  const pageReq = parseInt(sp.page ?? "1", 10);
+  const page = Number.isFinite(pageReq) && pageReq > 0 ? pageReq : 1;
+
   // ADMIN/PM-д бүх төсөл, бусдад зөвхөн өөртэй холбоотой
   const isManager = s.role === "ADMIN" || s.role === "PM";
-  const [projects, holidayKeys] = await Promise.all([
-    prisma.project.findMany({
-      where: isManager ? {} : { assignments: { some: { employeeId: me.id } } },
-      include: {
-        assignments: { include: { employee: true } },
-        phases: { orderBy: { ordinal: "asc" } },
-      },
-      orderBy: [{ status: "asc" }, { priority: "desc" }, { createdAt: "desc" }],
-    }),
-    loadHolidayKeys(),
-  ]);
+  const where = isManager ? {} : { assignments: { some: { employeeId: me.id } } };
+  // Sequential — connection_limit=1 means parallel risks pool starvation here.
+  const totalCount = await prisma.project.count({ where });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const projects = await prisma.project.findMany({
+    where,
+    include: {
+      assignments: { include: { employee: true } },
+      phases: { orderBy: { ordinal: "asc" } },
+    },
+    orderBy: [{ status: "asc" }, { priority: "desc" }, { createdAt: "desc" }],
+    take: PAGE_SIZE,
+    skip: (safePage - 1) * PAGE_SIZE,
+  });
+  const holidayKeys = await loadHolidayKeys();
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -41,8 +56,13 @@ export default async function MyProjectsPage() {
         </h1>
         <p className="text-white/45 text-[12px] mt-1">
           {isManager
-            ? "Удирдлагын хувьд бүх төсөл харна"
-            : `Танд оногдсон ${projects.length} төсөл`}
+            ? `Удирдлагын хувьд бүх төсөл харна · ${totalCount} нийт`
+            : `Танд оногдсон ${totalCount} төсөл`}
+          {totalPages > 1 && (
+            <span className="text-sub">
+              {" "}· {safePage}/{totalPages} хуудас
+            </span>
+          )}
         </p>
       </div>
 
@@ -131,6 +151,40 @@ export default async function MyProjectsPage() {
               </Link>
             );
           })}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6 text-[12px]">
+          <div className="text-sub">
+            {(safePage - 1) * PAGE_SIZE + 1}–
+            {Math.min(safePage * PAGE_SIZE, totalCount)} / {totalCount}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Link
+              href={safePage > 1 ? `/projects?page=${safePage - 1}` : "#"}
+              className={`px-3 py-1.5 rounded border text-[12px] transition ${
+                safePage > 1
+                  ? "border-bd text-tx hover:bg-white/[0.03]"
+                  : "border-bd/40 text-sub/40 pointer-events-none"
+              }`}
+            >
+              ← Өмнөх
+            </Link>
+            <span className="text-sub tabular-nums px-2">
+              {safePage} / {totalPages}
+            </span>
+            <Link
+              href={safePage < totalPages ? `/projects?page=${safePage + 1}` : "#"}
+              className={`px-3 py-1.5 rounded border text-[12px] transition ${
+                safePage < totalPages
+                  ? "border-bd text-tx hover:bg-white/[0.03]"
+                  : "border-bd/40 text-sub/40 pointer-events-none"
+              }`}
+            >
+              Дараах →
+            </Link>
+          </div>
         </div>
       )}
     </div>
